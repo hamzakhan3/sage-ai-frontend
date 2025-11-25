@@ -195,11 +195,20 @@ def on_message(client, userdata, msg):
             
             write_api.write(bucket=INFLUXDB_BUCKET, record=point)
             
-            # Print summary of critical tags with machine_id
+            # Print detailed summary of what was written
             if "counters" in data:
-                print(f"💾 Written [{machine_id}]: Running={system_running}, Fault={fault}, "
-                      f"Bottles={bottles_filled}, Rejected={bottles_rejected}, "
-                      f"Alarms=[Fault:{alarm_fault}, Overfill:{alarm_overfill}, Underfill:{alarm_underfill}]")
+                bottles_per_min = counters.get("BottlesPerMinute", 0.0)
+                print(f"💾 Written to InfluxDB [{machine_id}]:")
+                print(f"   📊 Production: {bottles_filled} bottles | "
+                      f"{bottles_per_min:.1f} bottles/min | "
+                      f"{bottles_rejected} rejected")
+                print(f"   🔧 Status: Running={system_running} | "
+                      f"Filling={filling} | Fault={fault}")
+                print(f"   📈 Fill Level: {fill_level:.1f}% | "
+                      f"Temp: {tank_temperature:.1f}°C")
+                print(f"   ⚠️  Alarms: Fault={alarm_fault} | "
+                      f"Overfill={alarm_overfill} | Underfill={alarm_underfill}")
+                print()
             else:
                 print(f"💾 Written [{machine_id}]: Bottles={bottle_count}, Speed={filler_speed:.2f}, Running={line_running}")
         except Exception as write_error:
