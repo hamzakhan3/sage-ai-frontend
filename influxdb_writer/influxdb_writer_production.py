@@ -17,6 +17,15 @@ from datetime import datetime, timezone
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# Load .env file from project root
+try:
+    from dotenv import load_dotenv
+    # Load from project root (parent of influxdb_writer directory)
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+    load_dotenv(env_path)
+except ImportError:
+    pass  # dotenv not installed, skip
+
 # Production Configuration
 MQTT_BROKER = os.getenv("MQTT_BROKER_HOST", "192.168.1.100")  # Cloud broker IP
 MQTT_PORT = int(os.getenv("MQTT_BROKER_PORT", "8883"))  # TLS port

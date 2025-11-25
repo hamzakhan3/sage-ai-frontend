@@ -3,6 +3,15 @@ Configuration file for Mock PLC Agent
 """
 import os
 
+# Load .env file from project root
+try:
+    from dotenv import load_dotenv
+    # Load from project root (parent of mock_plc_agent directory)
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
+    load_dotenv(env_path)
+except ImportError:
+    pass  # dotenv not installed, skip
+
 # MQTT Configuration
 MQTT_BROKER = os.getenv("MQTT_BROKER_HOST", "localhost")
 MQTT_PORT = int(os.getenv("MQTT_BROKER_PORT", "1883"))
