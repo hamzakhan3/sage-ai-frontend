@@ -3,6 +3,3 @@ language = "python3"
 [deploy]
 run = ["python3", "main.py"]
 
-[env]
-PORT="3005"
-
