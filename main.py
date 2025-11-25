@@ -65,11 +65,26 @@ print("=" * 60)
 print("🚀 MQTT OT Network - Starting on Replit")
 print("=" * 60)
 
-# Check if dependencies are installed
+# Auto-install Python dependencies
+print("\n📦 Checking Python dependencies...")
+try:
+    import paho.mqtt.client
+    import influxdb_client
+    print("✅ Python dependencies installed")
+except ImportError as e:
+    print(f"⚠️ Missing Python dependency: {e}")
+    print("📥 Installing Python dependencies...")
+    subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
+    print("✅ Python dependencies installed")
+
+# Auto-install frontend dependencies
+print("\n📦 Checking frontend dependencies...")
 if not os.path.exists("frontend/node_modules"):
-    print("⚠️ Frontend dependencies not installed.")
-    print("   Run: cd frontend && npm install")
-    print("   Then restart this script.\n")
+    print("📥 Installing frontend dependencies...")
+    subprocess.run(["npm", "install"], cwd="frontend", check=True)
+    print("✅ Frontend dependencies installed")
+else:
+    print("✅ Frontend dependencies already installed")
 
 # Start InfluxDB Writer
 print("\n📝 Starting InfluxDB Writer...")
@@ -88,17 +103,13 @@ start_service(
     "python3 mock_plc_agent/mock_plc_agent.py"
 )
 
-# Start Frontend (if node_modules exists)
-if os.path.exists("frontend/node_modules"):
-    print("\n🌐 Starting Frontend...")
-    start_service(
-        "Frontend",
-        "npm run dev",
-        cwd="frontend"
-    )
-else:
-    print("\n⚠️ Frontend not starting - dependencies missing")
-    print("   Install with: cd frontend && npm install")
+# Start Frontend
+print("\n🌐 Starting Frontend...")
+start_service(
+    "Frontend",
+    "npm run dev",
+    cwd="frontend"
+)
 
 print("\n" + "=" * 60)
 print("✅ All services started!")
