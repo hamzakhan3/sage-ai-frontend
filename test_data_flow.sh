@@ -41,11 +41,18 @@ fi
 echo ""
 echo "=== Step 4: Test InfluxDB connection and data ==="
 python3 << 'PYTHON'
-from dotenv import load_dotenv
 import os
+import sys
+from dotenv import load_dotenv
 from influxdb_client import InfluxDBClient
 
-load_dotenv()
+# Load .env from workspace root
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)) if '__file__' in dir() else '/home/runner/workspace', '.env')
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+else:
+    # Try loading from current directory
+    load_dotenv()
 
 url = os.getenv('INFLUXDB_URL')
 token = os.getenv('INFLUXDB_TOKEN')
