@@ -97,9 +97,9 @@ export default function Dashboard() {
       </div>
 
       {/* Alarm Events - Real-time from MQTT */}
-      <div className="mb-6">
-        <AlarmEvents machineId={machineId} />
-      </div>
+            <div className="mb-6">
+              <AlarmEvents machineId={machineId} machineType={machineType} />
+            </div>
 
       {/* Tags Table */}
       <TagsTable machineId={machineId} machineType={machineType} />

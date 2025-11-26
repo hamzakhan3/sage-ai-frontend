@@ -282,6 +282,9 @@ try:
             payload = json.dumps(data, indent=2)
             result = client.publish(topic_full, payload, qos=1, retain=False)
             
+            # Publish alarms separately (for alarm monitor WebSocket)
+            client.publish(f"plc/{MACHINE_ID}/lathe/alarms", json.dumps(data["alarms"]), qos=1)
+            
             # Print detailed status with key metrics
             print(f"📤 [{MACHINE_ID}] Published to MQTT:")
             print(f"   ⏰ Time: {data['timestamp']}")

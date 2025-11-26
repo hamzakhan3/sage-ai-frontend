@@ -18,7 +18,8 @@ from threading import Thread
 # MQTT Configuration
 MQTT_BROKER = os.getenv("MQTT_BROKER_HOST", "localhost")
 MQTT_PORT = int(os.getenv("MQTT_BROKER_PORT", "8883"))
-MQTT_TOPIC = os.getenv("MQTT_TOPIC", "plc/+/bottlefiller/alarms")
+MQTT_TOPIC_BOTTLEFILLER = os.getenv("MQTT_TOPIC_BOTTLEFILLER", "plc/+/bottlefiller/alarms")
+MQTT_TOPIC_LATHE = os.getenv("MQTT_TOPIC_LATHE", "plc/+/lathe/alarms")
 MQTT_USERNAME = os.getenv("MQTT_USERNAME", "influxdb_writer")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", "influxdb_writer_pass")
 MQTT_TLS_ENABLED = os.getenv("MQTT_TLS_ENABLED", "true").lower() == "true"
@@ -81,17 +82,26 @@ async def broadcast_alarm(message):
         # Remove disconnected clients
         connected_clients.difference_update(disconnected)
 
-def check_alarm_transitions(machine_id, alarms, timestamp):
+def check_alarm_transitions(machine_id, alarms, timestamp, machine_type="bottlefiller"):
     """Check for alarm state transitions and record events"""
     global previous_alarms
     
-    # Map alarm names from MQTT to display names
-    alarm_map = {
-        "Overfill": "AlarmOverfill",
-        "Underfill": "AlarmUnderfill",
-        "LowProductLevel": "AlarmLowProductLevel",
-        "CapMissing": "AlarmCapMissing",
-    }
+    # Map alarm names from MQTT to display names based on machine type
+    if machine_type == "lathe":
+        alarm_map = {
+            "spindle_overload": "AlarmSpindleOverload",
+            "chuck_not_clamped": "AlarmChuckNotClamped",
+            "door_open": "AlarmDoorOpen",
+            "tool_wear": "AlarmToolWear",
+            "coolant_low": "AlarmCoolantLow",
+        }
+    else:  # bottlefiller
+        alarm_map = {
+            "Overfill": "AlarmOverfill",
+            "Underfill": "AlarmUnderfill",
+            "LowProductLevel": "AlarmLowProductLevel",
+            "CapMissing": "AlarmCapMissing",
+        }
     
     # Get previous state for this machine
     prev = previous_alarms.get(machine_id, {})
@@ -159,8 +169,10 @@ def check_alarm_transitions(machine_id, alarms, timestamp):
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print(f"✅ Connected to MQTT broker")
-        client.subscribe(MQTT_TOPIC)
-        print(f"📡 Subscribed to: {MQTT_TOPIC}\n")
+        client.subscribe(MQTT_TOPIC_BOTTLEFILLER)
+        client.subscribe(MQTT_TOPIC_LATHE)
+        print(f"📡 Subscribed to: {MQTT_TOPIC_BOTTLEFILLER} (bottlefiller)")
+        print(f"📡 Subscribed to: {MQTT_TOPIC_LATHE} (lathe)\n")
     else:
         print(f"❌ Failed to connect, return code {rc}")
 
@@ -169,7 +181,10 @@ def on_message(client, userdata, msg):
         payload = json.loads(msg.payload.decode())
         topic = msg.topic
         
-        # Extract machine_id from topic: plc/{machine_id}/bottlefiller/alarms
+        # Determine machine type from topic
+        machine_type = "lathe" if "/lathe/alarms" in topic else "bottlefiller"
+        
+        # Extract machine_id from topic: plc/{machine_id}/bottlefiller/alarms or plc/{machine_id}/lathe/alarms
         parts = topic.split('/')
         if len(parts) >= 2:
             machine_id = parts[1]
@@ -185,20 +200,33 @@ def on_message(client, userdata, msg):
         # Payload from alarms topic is directly the alarms object
         alarms = {}
         
-        # Map alarm names from MQTT to our tracking format
-        if "LowProductLevel" in payload:
-            alarms["LowProductLevel"] = payload["LowProductLevel"]
-        if "Overfill" in payload:
-            alarms["Overfill"] = payload["Overfill"]
-        if "Underfill" in payload:
-            alarms["Underfill"] = payload["Underfill"]
-        if "CapMissing" in payload:
-            alarms["CapMissing"] = payload["CapMissing"]
-        # NoBottle is in MQTT but we don't track it
+        if machine_type == "lathe":
+            # Map lathe alarm names from MQTT to our tracking format
+            if "spindle_overload" in payload:
+                alarms["spindle_overload"] = payload["spindle_overload"]
+            if "chuck_not_clamped" in payload:
+                alarms["chuck_not_clamped"] = payload["chuck_not_clamped"]
+            if "door_open" in payload:
+                alarms["door_open"] = payload["door_open"]
+            if "tool_wear" in payload:
+                alarms["tool_wear"] = payload["tool_wear"]
+            if "coolant_low" in payload:
+                alarms["coolant_low"] = payload["coolant_low"]
+        else:  # bottlefiller
+            # Map alarm names from MQTT to our tracking format
+            if "LowProductLevel" in payload:
+                alarms["LowProductLevel"] = payload["LowProductLevel"]
+            if "Overfill" in payload:
+                alarms["Overfill"] = payload["Overfill"]
+            if "Underfill" in payload:
+                alarms["Underfill"] = payload["Underfill"]
+            if "CapMissing" in payload:
+                alarms["CapMissing"] = payload["CapMissing"]
+            # NoBottle is in MQTT but we don't track it
         
         # Check for alarm transitions
         if alarms:
-            check_alarm_transitions(machine_id, alarms, timestamp)
+            check_alarm_transitions(machine_id, alarms, timestamp, machine_type)
             
     except json.JSONDecodeError:
         pass
@@ -256,7 +284,7 @@ if MQTT_TLS_ENABLED:
 if __name__ == "__main__":
     print("🚨 Alarm Monitor starting...")
     print(f"🔗 Connecting to {MQTT_BROKER}:{MQTT_PORT}")
-    print(f"📡 Topic: {MQTT_TOPIC} (alarms only)")
+    print(f"📡 Topics: {MQTT_TOPIC_BOTTLEFILLER} and {MQTT_TOPIC_LATHE}")
     print(f"💾 Events file: {ALARM_EVENTS_FILE} (for debugging)")
     print(f"🌐 WebSocket: ws://{WS_HOST}:{WS_PORT}")
     print(f"⚠️  Tracking: Overfill, Underfill, LowProductLevel, CapMissing\n")

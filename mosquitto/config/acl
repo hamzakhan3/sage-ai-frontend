@@ -15,6 +15,11 @@ user influxdb_writer
 topic read plc/+/bottlefiller/#
 topic read plc/+/lathe/#
 
+# Alarm Monitor - Can subscribe to alarm topics for any machine
+user alarm_monitor
+topic read plc/+/bottlefiller/alarms
+topic read plc/+/lathe/alarms
+
 # Admin user - Full access
 user admin
 topic readwrite #
