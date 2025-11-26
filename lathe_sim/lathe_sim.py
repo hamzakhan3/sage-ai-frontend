@@ -142,13 +142,26 @@ CA_CERT_PATH = os.getenv("CA_CERT_PATH", "")
 # Configure TLS if enabled
 if MQTT_TLS_ENABLED:
     print(f"🔐 Configuring TLS connection...")
-    if CA_CERT_PATH and os.path.exists(CA_CERT_PATH):
+    # Check if connecting to cloud broker (HiveMQ Cloud, etc.)
+    is_cloud_broker = "hivemq.cloud" in _MQTT_BROKER_HOST.lower() or "cloud" in _MQTT_BROKER_HOST.lower()
+    is_localhost = "localhost" in _MQTT_BROKER_HOST.lower() or "127.0.0.1" in _MQTT_BROKER_HOST
+    
+    if CA_CERT_PATH and os.path.exists(CA_CERT_PATH) and not is_cloud_broker:
+        # Use CA cert for local/self-hosted brokers
         client.tls_set(ca_certs=CA_CERT_PATH, cert_reqs=ssl.CERT_REQUIRED)
-        client.tls_insecure_set(False)
+        # Disable hostname verification for localhost
+        if is_localhost:
+            client.tls_insecure_set(True)
+            print(f"   ⚠️  Hostname verification disabled for localhost")
+        else:
+            client.tls_insecure_set(False)
         print(f"   ✅ Using CA certificate: {CA_CERT_PATH}")
     else:
-        print(f"   ℹ️  Cloud MQTT broker detected, disabling certificate verification")
-        print(f"   ⚠️  Running without TLS verification (for cloud MQTT)")
+        # For cloud brokers or when cert not found, disable certificate verification
+        if is_cloud_broker:
+            print(f"   ℹ️  Cloud MQTT broker detected, disabling certificate verification")
+        else:
+            print(f"   ⚠️  CA cert not found, running without TLS verification")
         client.tls_set(cert_reqs=ssl.CERT_NONE)
         client.tls_insecure_set(True)
 
@@ -188,6 +201,7 @@ print("Press Ctrl+C to stop\n")
 
 def startLatheMock():
     """Main function to start the lathe mock simulator"""
+    global connected
     try:
         while True:
             # Check connection status before publishing
