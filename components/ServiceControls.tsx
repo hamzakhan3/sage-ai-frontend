@@ -131,7 +131,7 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
     // Poll every 2 seconds to keep status updated
     pollInterval = setInterval(() => {
       if (isMounted) {
-        fetchStatus();
+    fetchStatus();
       }
     }, 2000);
 

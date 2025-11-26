@@ -70,17 +70,17 @@ export function TagsTable({ machineId = 'machine-01' }: TagsTableProps) {
           <span className="text-xs text-gray-500">{isExpanded ? '▼' : '▶'}</span>
         </div>
         {isExpanded && (
-          <div className="text-yellow-400 p-4 text-center">
-            ⚠️ No data available for {machineId}
+        <div className="text-yellow-400 p-4 text-center">
+          ⚠️ No data available for {machineId}
+          <br />
+          <span className="text-gray-500 text-sm mt-2 block">
+            To see data for this machine, run:
             <br />
-            <span className="text-gray-500 text-sm mt-2 block">
-              To see data for this machine, run:
-              <br />
-              <code className="bg-midnight-200 px-2 py-1 rounded mt-1 inline-block border border-dark-border">
-                ./start_mock_plc.sh {machineId}
-              </code>
-            </span>
-          </div>
+            <code className="bg-midnight-200 px-2 py-1 rounded mt-1 inline-block border border-dark-border">
+              ./start_mock_plc.sh {machineId}
+            </code>
+          </span>
+        </div>
         )}
       </div>
     );
@@ -173,18 +173,18 @@ export function TagsTable({ machineId = 'machine-01' }: TagsTableProps) {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
-          <h3 className="text-white text-lg font-semibold">All Tag Values</h3>
+        <h3 className="text-white text-lg font-semibold">All Tag Values</h3>
           <span className="text-xs text-gray-500">{isExpanded ? '▼' : '▶'}</span>
         </div>
         {isExpanded && (
-          <div className="text-gray-400 text-sm">
-            Last updated: {formatESTTime(data._time)}
-          </div>
+        <div className="text-gray-400 text-sm">
+          Last updated: {formatESTTime(data._time)}
+        </div>
         )}
       </div>
 
       {isExpanded && (
-        <div className="overflow-x-auto">
+      <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-dark-border">
@@ -320,7 +320,7 @@ export function TagsTable({ machineId = 'machine-01' }: TagsTableProps) {
             ))}
           </tbody>
         </table>
-        </div>
+      </div>
       )}
     </div>
   );
