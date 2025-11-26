@@ -24,13 +24,20 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
   const logEndRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // Calculate running status (must be before useEffect that uses them)
+  // Use a more reliable check that also considers loading state
   const influxdbRunning = status?.influxdbWriter?.running ?? false;
   const machineRunning = status?.machines?.[machineId as keyof typeof status.machines]?.running ?? false;
   
   // Debug logging
   useEffect(() => {
-    console.log('Service status updated:', { status, influxdbRunning, machineRunning });
-  }, [status, influxdbRunning, machineRunning]);
+    console.log('Service status updated:', { 
+      status, 
+      influxdbRunning, 
+      machineRunning,
+      loading,
+      'influxdbWriter.running': status?.influxdbWriter?.running 
+    });
+  }, [status, influxdbRunning, machineRunning, loading]);
 
   // Reset logs visibility when service stops
   useEffect(() => {
@@ -172,10 +179,16 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
                 ? data.influxdbWriter?.running 
                 : data.machines?.[machineId]?.running;
               
-              if (isRunning && attempt < 5) {
-                // Service is running, clear loading state
+              if (isRunning) {
+                // Service is running, clear loading state and force re-render
                 setLoading(prev => ({ ...prev, [service]: false }));
-              } else if (!isRunning && attempt < 5) {
+                // Force another status check to ensure UI updates
+                setTimeout(() => {
+                  fetch('/api/services/status', { cache: 'no-store' })
+                    .then(res => res.json())
+                    .then(data => setStatus({ ...data }));
+                }, 100);
+              } else if (attempt < 5) {
                 // Service not running yet, try again
                 setTimeout(() => refreshStatus(attempt + 1), 1000);
               } else {
@@ -314,15 +327,22 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              {!influxdbRunning ? (
+              {!influxdbRunning && !loading.influxdb_writer ? (
                 <button
                   onClick={() => startService('influxdb_writer')}
                   disabled={loading.influxdb_writer}
                   className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium transition-colors shadow-lg hover:shadow-green-500/50"
                 >
-                  {loading.influxdb_writer ? '⏳ Starting Writer...' : '▶ Start Writer'}
+                  ▶ Start Writer
                 </button>
-              ) : (
+              ) : loading.influxdb_writer && !influxdbRunning ? (
+                <button
+                  disabled
+                  className="bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium"
+                >
+                  ⏳ Starting Writer...
+                </button>
+              ) : influxdbRunning ? (
                 <>
                   <button
                     onClick={() => {
