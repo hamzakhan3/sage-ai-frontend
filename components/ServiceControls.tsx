@@ -157,26 +157,43 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
         
         // Refresh status multiple times to catch the service starting
         // Try immediately, then after 1s, 2s, and 3s
-        const refreshStatus = () => {
+        const refreshStatus = (attempt: number = 0) => {
           fetch('/api/services/status', {
             cache: 'no-store', // Prevent caching
           })
             .then(res => res.json())
             .then(data => {
-              console.log('Status refreshed:', data);
-              setStatus(data);
+              console.log(`Status refreshed (attempt ${attempt}):`, data);
+              // Force a new object reference to trigger re-render
+              setStatus({ ...data });
+              
+              // Check if service is now running
+              const isRunning = service === 'influxdb_writer' 
+                ? data.influxdbWriter?.running 
+                : data.machines?.[machineId]?.running;
+              
+              if (isRunning && attempt < 5) {
+                // Service is running, clear loading state
+                setLoading(prev => ({ ...prev, [service]: false }));
+              } else if (!isRunning && attempt < 5) {
+                // Service not running yet, try again
+                setTimeout(() => refreshStatus(attempt + 1), 1000);
+              } else {
+                // Max attempts reached, clear loading anyway
+                setLoading(prev => ({ ...prev, [service]: false }));
+              }
             })
-            .catch(err => console.error('Error refreshing status:', err));
+            .catch(err => {
+              console.error('Error refreshing status:', err);
+              // Clear loading on error after a delay
+              if (attempt >= 3) {
+                setLoading(prev => ({ ...prev, [service]: false }));
+              }
+            });
         };
         
-        // Immediate refresh
-        refreshStatus();
-        
-        // Then refresh at intervals
-        setTimeout(refreshStatus, 1000);
-        setTimeout(refreshStatus, 2000);
-        setTimeout(refreshStatus, 3000);
-        setTimeout(refreshStatus, 5000); // Extra check at 5s
+        // Start refreshing status
+        refreshStatus(0);
       } else {
         const errorMsg = data.message || data.error || 'Failed to start service';
         const logPreview = data.logPreview ? `\n\nLog preview:\n${data.logPreview}` : '';
@@ -192,6 +209,7 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
       }
     } catch (err: any) {
       setError(err.message || 'Failed to start service');
+      setLoading(prev => ({ ...prev, [service]: false }));
       
       // Only update logs for InfluxDB Writer
       if (service === 'influxdb_writer') {
@@ -200,9 +218,8 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
           [service]: (prev[service] || '') + `\n❌ Error: ${err.message}\n` 
         }));
       }
-    } finally {
-      setLoading({ ...loading, [service]: false });
     }
+    // Note: Don't clear loading in finally - let refreshStatus handle it
   };
 
   const stopService = async (service: 'influxdb_writer' | 'mock_plc') => {
@@ -226,29 +243,53 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
       if (response.ok && data.success) {
         setError(null);
         // Refresh status multiple times to catch the service stopping
-        const refreshStatus = () => {
-          fetch('/api/services/status')
+        const refreshStatus = (attempt: number = 0) => {
+          fetch('/api/services/status', {
+            cache: 'no-store', // Prevent caching
+          })
             .then(res => res.json())
-            .then(data => setStatus(data))
-            .catch(err => console.error('Error refreshing status:', err));
+            .then(data => {
+              console.log(`Status refreshed after stop (attempt ${attempt}):`, data);
+              // Force a new object reference to trigger re-render
+              setStatus({ ...data });
+              
+              // Check if service is now stopped
+              const isRunning = service === 'influxdb_writer' 
+                ? data.influxdbWriter?.running 
+                : data.machines?.[machineId]?.running;
+              
+              if (!isRunning && attempt < 3) {
+                // Service is stopped, clear loading state
+                setLoading(prev => ({ ...prev, [service]: false }));
+              } else if (isRunning && attempt < 3) {
+                // Service still running, try again
+                setTimeout(() => refreshStatus(attempt + 1), 500);
+              } else {
+                // Max attempts reached, clear loading anyway
+                setLoading(prev => ({ ...prev, [service]: false }));
+              }
+            })
+            .catch(err => {
+              console.error('Error refreshing status:', err);
+              // Clear loading on error after a delay
+              if (attempt >= 2) {
+                setLoading(prev => ({ ...prev, [service]: false }));
+              }
+            });
         };
         
-        // Immediate refresh
-        refreshStatus();
-        
-        // Then refresh at intervals
-        setTimeout(refreshStatus, 500);
-        setTimeout(refreshStatus, 1000);
-        setTimeout(refreshStatus, 2000);
+        // Start refreshing status
+        refreshStatus(0);
       } else {
         const errorMsg = data.message || data.error || 'Failed to stop service';
         setError(errorMsg);
+        setLoading(prev => ({ ...prev, [service]: false }));
       }
     } catch (err: any) {
       setError(err.message || 'Failed to stop service');
-    } finally {
-      setLoading({ ...loading, [service]: false });
+      setLoading(prev => ({ ...prev, [service]: false }));
     }
+    // Note: Don't clear loading in finally - let refreshStatus handle it
   };
 
   return (
