@@ -6,10 +6,11 @@ import { PLCData } from '@/types/plc-data';
 
 interface TagsTableProps {
   machineId?: string;
+  machineType?: string;
 }
 
-export function TagsTable({ machineId = 'machine-01' }: TagsTableProps) {
-  const { data, isLoading, error } = usePLCData(machineId);
+export function TagsTable({ machineId = 'machine-01', machineType }: TagsTableProps) {
+  const { data, isLoading, error } = usePLCData(machineId, machineType);
   const [isExpanded, setIsExpanded] = useState(true);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     status: true,
@@ -17,6 +18,8 @@ export function TagsTable({ machineId = 'machine-01' }: TagsTableProps) {
     alarm: true,
     analog: true,
     input: true,
+    tooling: true,
+    coolant: true,
   });
 
   const toggleSection = (section: string) => {
@@ -95,21 +98,40 @@ export function TagsTable({ machineId = 'machine-01' }: TagsTableProps) {
     );
   }
 
-  // Organize fields by category
-  const statusFields = [
+  // Organize fields by category - different fields for bottle filler vs lathe
+  const isLathe = machineType === 'lathe';
+
+  const statusFields = isLathe ? [
+    { label: 'System Running', value: data.SystemRunning, type: 'boolean' },
+    { label: 'Machining', value: data.Machining, type: 'boolean' },
+    { label: 'Ready', value: data.Ready, type: 'boolean' },
+    { label: 'Fault', value: !data.Fault, type: 'boolean' }, // Invert
+    { label: 'Auto Mode', value: data.AutoMode, type: 'boolean' },
+  ] : [
     { label: 'System Running', value: data.SystemRunning, type: 'boolean' },
     { label: 'Fault', value: !data.Fault, type: 'boolean' }, // Invert
     { label: 'Filling', value: data.Filling, type: 'boolean' },
     { label: 'Ready', value: data.Ready, type: 'boolean' },
   ];
 
-  const counterFields = [
+  const counterFields = isLathe ? [
+    { label: 'Parts Completed', value: data.PartsCompleted, type: 'number' },
+    { label: 'Parts Rejected', value: data.PartsRejected, type: 'number' },
+    { label: 'Parts Per Hour', value: data.PartsPerHour, type: 'number' },
+    { label: 'Cycle Time', value: data.CycleTime, type: 'number', unit: 's' },
+  ] : [
     { label: 'Bottles Filled', value: data.BottlesFilled, type: 'number' },
     { label: 'Bottles Rejected', value: data.BottlesRejected, type: 'number' },
     { label: 'Bottles Per Minute', value: data.BottlesPerMinute, type: 'number' },
   ];
 
-  const alarmFields = [
+  const alarmFields = isLathe ? [
+    { label: 'Alarm Spindle Overload', value: data.AlarmSpindleOverload, type: 'boolean' },
+    { label: 'Alarm Chuck Not Clamped', value: data.AlarmChuckNotClamped, type: 'boolean' },
+    { label: 'Alarm Door Open', value: data.AlarmDoorOpen, type: 'boolean' },
+    { label: 'Alarm Tool Wear', value: data.AlarmToolWear, type: 'boolean' },
+    { label: 'Alarm Coolant Low', value: data.AlarmCoolantLow, type: 'boolean' },
+  ] : [
     { label: 'Alarm Fault', value: data.AlarmFault, type: 'boolean' },
     { label: 'Alarm Overfill', value: data.AlarmOverfill, type: 'boolean' },
     { label: 'Alarm Underfill', value: data.AlarmUnderfill, type: 'boolean' },
@@ -117,16 +139,43 @@ export function TagsTable({ machineId = 'machine-01' }: TagsTableProps) {
     { label: 'Alarm Cap Missing', value: data.AlarmCapMissing, type: 'boolean' },
   ];
 
-  const analogFields = [
+  const analogFields = isLathe ? [
+    { label: 'Spindle Speed', value: data.SpindleSpeed, type: 'number', unit: 'RPM' },
+    { label: 'Spindle Speed Setpoint', value: data.SpindleSpeedSetpoint, type: 'number', unit: 'RPM' },
+    { label: 'Spindle Load', value: data.SpindleLoad, type: 'number', unit: '%' },
+    { label: 'Axis X Position', value: data.AxisXPosition, type: 'number', unit: 'mm' },
+    { label: 'Axis X Feedrate', value: data.AxisXFeedrate, type: 'number', unit: 'mm/min' },
+    { label: 'Axis Z Position', value: data.AxisZPosition, type: 'number', unit: 'mm' },
+    { label: 'Axis Z Feedrate', value: data.AxisZFeedrate, type: 'number', unit: 'mm/min' },
+  ] : [
     { label: 'Tank Temperature', value: data.TankTemperature, type: 'number', unit: '°C' },
     { label: 'Tank Pressure', value: data.TankPressure, type: 'number', unit: 'PSI' },
     { label: 'Fill Flow Rate', value: data.FillFlowRate, type: 'number', unit: 'L/min' },
     { label: 'Conveyor Speed', value: data.ConveyorSpeed, type: 'number', unit: 'RPM' },
   ];
 
-  const inputFields = [
+  const inputFields = isLathe ? [
+    { label: 'Door Closed', value: data.DoorClosed, type: 'boolean' },
+    { label: 'E-Stop OK', value: data.EStopOK, type: 'boolean' },
+    { label: 'Axis X Homed', value: data.AxisXHomed, type: 'boolean' },
+    { label: 'Axis Z Homed', value: data.AxisZHomed, type: 'boolean' },
+  ] : [
     { label: 'Low Level Sensor', value: data.LowLevelSensor, type: 'boolean' },
   ];
+
+  // Lathe-specific additional sections
+  const toolingFields = isLathe ? [
+    { label: 'Tool Number', value: data.ToolNumber, type: 'number' },
+    { label: 'Tool Life Percent', value: data.ToolLifePercent, type: 'number', unit: '%' },
+    { label: 'Tool Offset X', value: data.ToolOffsetX, type: 'number', unit: 'mm' },
+    { label: 'Tool Offset Z', value: data.ToolOffsetZ, type: 'number', unit: 'mm' },
+  ] : [];
+
+  const coolantFields = isLathe ? [
+    { label: 'Coolant Flow Rate', value: data.CoolantFlowRate, type: 'number', unit: 'L/min' },
+    { label: 'Coolant Temperature', value: data.CoolantTemperature, type: 'number', unit: '°C' },
+    { label: 'Coolant Level Percent', value: data.CoolantLevelPercent, type: 'number', unit: '%' },
+  ] : [];
 
   const formatValue = (value: any, type: string, unit?: string) => {
     if (type === 'boolean') {
@@ -295,14 +344,14 @@ export function TagsTable({ machineId = 'machine-01' }: TagsTableProps) {
               </tr>
             ))}
 
-            {/* Input Fields */}
+            {/* Input Fields / Safety Fields */}
             <tr 
               className="border-b border-dark-border cursor-pointer hover:bg-midnight-300/50 transition-colors"
               onClick={() => toggleSection('input')}
             >
               <td colSpan={3} className="text-gray-400 text-sm font-semibold py-2 px-4 bg-midnight-200">
                 <div className="flex items-center justify-between">
-                  <span>INPUT FIELDS</span>
+                  <span>{isLathe ? 'SAFETY FIELDS' : 'INPUT FIELDS'}</span>
                   <span className="text-xs">{expandedSections.input ? '▼' : '▶'}</span>
                 </div>
               </td>
@@ -318,6 +367,58 @@ export function TagsTable({ machineId = 'machine-01' }: TagsTableProps) {
                 </td>
               </tr>
             ))}
+
+            {/* Tooling Fields (Lathe only) */}
+            {isLathe && toolingFields.length > 0 && (
+              <>
+                <tr 
+                  className="border-b border-dark-border cursor-pointer hover:bg-midnight-300/50 transition-colors"
+                  onClick={() => toggleSection('tooling')}
+                >
+                  <td colSpan={3} className="text-gray-400 text-sm font-semibold py-2 px-4 bg-midnight-200">
+                    <div className="flex items-center justify-between">
+                      <span>TOOLING FIELDS</span>
+                      <span className="text-xs">{expandedSections.tooling ? '▼' : '▶'}</span>
+                    </div>
+                  </td>
+                </tr>
+                {expandedSections.tooling && toolingFields.map((field) => (
+                  <tr key={field.label} className="border-b border-dark-border hover:bg-midnight-200/20">
+                    <td className="text-dark-text py-2 px-4">{field.label}</td>
+                    <td className="text-white py-2 px-4">{formatValue(field.value, field.type, field.unit)}</td>
+                    <td className="py-2 px-4">
+                      <div className="w-2 h-2 rounded-full bg-gray-500" />
+                    </td>
+                  </tr>
+                ))}
+              </>
+            )}
+
+            {/* Coolant Fields (Lathe only) */}
+            {isLathe && coolantFields.length > 0 && (
+              <>
+                <tr 
+                  className="border-b border-dark-border cursor-pointer hover:bg-midnight-300/50 transition-colors"
+                  onClick={() => toggleSection('coolant')}
+                >
+                  <td colSpan={3} className="text-gray-400 text-sm font-semibold py-2 px-4 bg-midnight-200">
+                    <div className="flex items-center justify-between">
+                      <span>COOLANT FIELDS</span>
+                      <span className="text-xs">{expandedSections.coolant ? '▼' : '▶'}</span>
+                    </div>
+                  </td>
+                </tr>
+                {expandedSections.coolant && coolantFields.map((field) => (
+                  <tr key={field.label} className="border-b border-dark-border hover:bg-midnight-200/20">
+                    <td className="text-dark-text py-2 px-4">{field.label}</td>
+                    <td className="text-white py-2 px-4">{formatValue(field.value, field.type, field.unit)}</td>
+                    <td className="py-2 px-4">
+                      <div className="w-2 h-2 rounded-full bg-gray-500" />
+                    </td>
+                  </tr>
+                ))}
+              </>
+            )}
           </tbody>
         </table>
       </div>

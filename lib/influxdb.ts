@@ -49,12 +49,18 @@ async function executeQuery(fluxQuery: string): Promise<any[]> {
 export async function queryFieldValue(
   field: string,
   machineId: string = 'machine-01',
-  timeRange: string = '-24h'
+  timeRange: string = '-24h',
+  machineType?: string
 ): Promise<number | boolean | null> {
+  const machineTypeFilter = machineType 
+    ? `|> filter(fn: (r) => r["machine_type"] == "${machineType}")`
+    : '';
+
   const fluxQuery = `
     from(bucket: "${INFLUXDB_BUCKET}")
       |> range(start: ${timeRange})
       |> filter(fn: (r) => r["machine_id"] == "${machineId}")
+      ${machineTypeFilter}
       |> filter(fn: (r) => r["_field"] == "${field}")
       |> last()
   `;
@@ -69,14 +75,19 @@ export async function queryFieldValue(
 export async function queryMultipleFields(
   fields: string[],
   machineId: string = 'machine-01',
-  timeRange: string = '-24h'
+  timeRange: string = '-24h',
+  machineType?: string
 ): Promise<Record<string, number | boolean>> {
   const fieldFilter = fields.map(f => `r["_field"] == "${f}"`).join(' or ');
+  const machineTypeFilter = machineType 
+    ? `|> filter(fn: (r) => r["machine_type"] == "${machineType}")`
+    : '';
   
   const fluxQuery = `
     from(bucket: "${INFLUXDB_BUCKET}")
       |> range(start: ${timeRange})
       |> filter(fn: (r) => r["machine_id"] == "${machineId}")
+      ${machineTypeFilter}
       |> filter(fn: (r) => ${fieldFilter})
       |> last()
   `;
@@ -98,11 +109,16 @@ export async function queryMultipleFields(
  */
 export async function queryAllTags(
   machineId: string = 'machine-01',
-  timeRange: string = '-24h'
+  timeRange: string = '-24h',
+  machineType?: string
 ): Promise<Record<string, any>> {
   try {
     // Use GET endpoint - simpler and cleaner
-    const response = await fetch(`/api/influxdb/latest?machineId=${machineId}&timeRange=${timeRange}`);
+    let url = `/api/influxdb/latest?machineId=${machineId}&timeRange=${timeRange}`;
+    if (machineType) {
+      url += `&machineType=${machineType}`;
+    }
+    const response = await fetch(url);
     
     if (!response.ok) {
       if (response.status === 404) {
@@ -135,7 +151,8 @@ export async function queryTimeSeries(
   field: string,
   machineId: string = 'machine-01',
   timeRange: string = '-1h',
-  windowPeriod?: string
+  windowPeriod?: string,
+  machineType?: string
 ): Promise<Array<{ time: string; value: number; field: string }>> {
   // Auto-determine window period based on time range if not provided
   // For shorter ranges, use smaller windows for better granularity
@@ -150,10 +167,16 @@ export async function queryTimeSeries(
     }
   }
 
+  // Build machine_type filter if provided
+  const machineTypeFilter = machineType 
+    ? `|> filter(fn: (r) => r["machine_type"] == "${machineType}")`
+    : '';
+
   const fluxQuery = `
     from(bucket: "${INFLUXDB_BUCKET}")
       |> range(start: ${timeRange})
       |> filter(fn: (r) => r["machine_id"] == "${machineId}")
+      ${machineTypeFilter}
       |> filter(fn: (r) => r["_field"] == "${field}")
       |> aggregateWindow(every: ${effectiveWindowPeriod}, fn: mean, createEmpty: false)
   `;
@@ -177,9 +200,17 @@ export async function queryTimeSeries(
  */
 export async function queryAlarmHistory(
   machineId: string = 'machine-01',
-  timeRange: string = '-24h'
+  timeRange: string = '-24h',
+  machineType?: string
 ): Promise<Record<string, number>> {
-  const alarmFields = [
+  // Different alarm fields for bottle filler vs lathe
+  const alarmFields = machineType === 'lathe' ? [
+    'AlarmSpindleOverload',
+    'AlarmChuckNotClamped',
+    'AlarmDoorOpen',
+    'AlarmToolWear',
+    'AlarmCoolantLow'
+  ] : [
     'AlarmFault',
     'AlarmOverfill',
     'AlarmUnderfill',
@@ -194,6 +225,10 @@ export async function queryAlarmHistory(
     alarmCounts[field] = 0;
   });
   
+  const machineTypeFilter = machineType 
+    ? `|> filter(fn: (r) => r["machine_type"] == "${machineType}")`
+    : '';
+  
   // For each alarm field, query values and count transitions in JavaScript
   // Since Flux's difference() doesn't work on booleans, we process in JS
   for (const field of alarmFields) {
@@ -201,6 +236,7 @@ export async function queryAlarmHistory(
       from(bucket: "${INFLUXDB_BUCKET}")
         |> range(start: ${timeRange})
         |> filter(fn: (r) => r["machine_id"] == "${machineId}")
+        ${machineTypeFilter}
         |> filter(fn: (r) => r["_field"] == "${field}")
         |> sort(columns: ["_time"])
         |> aggregateWindow(every: 1s, fn: last, createEmpty: false)

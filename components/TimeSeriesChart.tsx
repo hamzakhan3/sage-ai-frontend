@@ -8,15 +8,17 @@ interface TimeSeriesChartProps {
   label: string;
   machineId?: string;
   timeRange?: string;
+  machineType?: string;
 }
 
 export function TimeSeriesChart({ 
   field, 
   label, 
   machineId = 'machine-01',
-  timeRange = '-1h'
+  timeRange = '-1h',
+  machineType
 }: TimeSeriesChartProps) {
-  const { data, isLoading, error } = useTimeSeries(field, machineId, timeRange);
+  const { data, isLoading, error } = useTimeSeries(field, machineId, timeRange, machineType);
 
   if (isLoading) {
     return (

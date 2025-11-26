@@ -7,15 +7,16 @@ import { queryAlarmHistory } from '@/lib/influxdb';
 interface AlarmHistoryProps {
   machineId?: string;
   timeRange?: string;
+  machineType?: string;
 }
 
-export function AlarmHistory({ machineId = 'machine-01', timeRange = '-24h' }: AlarmHistoryProps) {
+export function AlarmHistory({ machineId = 'machine-01', timeRange = '-24h', machineType }: AlarmHistoryProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const { data, isLoading, error } = useQuery<Record<string, number>>({
-    queryKey: ['alarm-history', machineId, timeRange],
+    queryKey: ['alarm-history', machineId, timeRange, machineType],
     queryFn: async () => {
       try {
-        return await queryAlarmHistory(machineId, timeRange);
+        return await queryAlarmHistory(machineId, timeRange, machineType);
       } catch (error) {
         console.error('Error fetching alarm history:', error);
         return {};
@@ -53,7 +54,14 @@ export function AlarmHistory({ machineId = 'machine-01', timeRange = '-24h' }: A
     );
   }
 
-  const alarms = [
+  // Different alarm labels for bottle filler vs lathe
+  const alarms = machineType === 'lathe' ? [
+    { label: 'Spindle Overload', field: 'AlarmSpindleOverload' },
+    { label: 'Chuck Not Clamped', field: 'AlarmChuckNotClamped' },
+    { label: 'Door Open', field: 'AlarmDoorOpen' },
+    { label: 'Tool Wear', field: 'AlarmToolWear' },
+    { label: 'Coolant Low', field: 'AlarmCoolantLow' },
+  ] : [
     { label: 'Fault', field: 'AlarmFault' },
     { label: 'Overfill', field: 'AlarmOverfill' },
     { label: 'Underfill', field: 'AlarmUnderfill' },

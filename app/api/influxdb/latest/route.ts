@@ -23,12 +23,18 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const machineId = searchParams.get('machineId') || 'machine-01';
     const timeRange = searchParams.get('timeRange') || '-24h';
+    const machineType = searchParams.get('machineType'); // Get machine_type filter
 
     // Query to get latest tag values
     // For counters (BottlesFilled, BottlesRejected), calculate total by summing increments
     // This handles counter resets properly
     // For other fields, use last() to get the most recent value
     const counterFields = ['BottlesFilled', 'BottlesRejected'];
+    
+    // Build machine_type filter if provided
+    const machineTypeFilter = machineType 
+      ? `|> filter(fn: (r) => r["machine_type"] == "${machineType}")`
+      : '';
     
     // For counters, calculate total by summing increments using difference()
     // Only count small increments (1-10) to ignore large jumps that might be data issues
@@ -37,6 +43,7 @@ export async function GET(request: NextRequest) {
       from(bucket: "${INFLUXDB_BUCKET}")
         |> range(start: ${timeRange})
         |> filter(fn: (r) => r["machine_id"] == "${machineId}")
+        ${machineTypeFilter}
         |> filter(fn: (r) => r["_field"] == "BottlesFilled" or r["_field"] == "BottlesRejected")
         |> sort(columns: ["_time"])
         |> aggregateWindow(every: 1s, fn: last, createEmpty: false)
@@ -51,6 +58,7 @@ export async function GET(request: NextRequest) {
       from(bucket: "${INFLUXDB_BUCKET}")
         |> range(start: ${timeRange})
         |> filter(fn: (r) => r["machine_id"] == "${machineId}")
+        ${machineTypeFilter}
         |> filter(fn: (r) => r["_field"] != "BottlesFilled" and r["_field"] != "BottlesRejected")
         |> group(columns: ["_field"])
         |> last()

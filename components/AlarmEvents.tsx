@@ -85,10 +85,11 @@ export function AlarmEvents({ machineId = 'machine-01' }: AlarmEventsProps) {
           };
           
           // Add new event to the beginning of the list
+          // Keep events for all machines in state, but filter when displaying
           setEvents((prevEvents) => {
             const updated = [newEvent, ...prevEvents];
-            // Keep only last 20 events
-            return updated.slice(0, 20);
+            // Keep only last 50 events (to maintain history across machine switches)
+            return updated.slice(0, 50);
           });
         }
       } catch (error) {
@@ -160,7 +161,9 @@ export function AlarmEvents({ machineId = 'machine-01' }: AlarmEventsProps) {
     }
   };
 
-  const activeAlarms = events.filter(e => e.state === 'RAISED').length;
+  // Filter events to only show those for the selected machine
+  const filteredEvents = events.filter(e => e.machine_id === machineId);
+  const activeAlarms = filteredEvents.filter(e => e.state === 'RAISED').length;
 
   const getConnectionStatusColor = () => {
     switch (connectionStatus) {
@@ -251,22 +254,22 @@ export function AlarmEvents({ machineId = 'machine-01' }: AlarmEventsProps) {
               </div>
             )}
 
-            {events.length === 0 ? (
+            {filteredEvents.length === 0 ? (
               <div className="p-4 bg-green-500/10 border border-green-500/30 rounded text-center">
                 <span className="text-green-400 text-sm">
                   {connectionStatus === 'connected' 
-                    ? '✅ Waiting for alarm events...' 
+                    ? `✅ No alarm events for ${machineId}...` 
                     : 'No alarm events yet'}
                 </span>
                 <p className="text-gray-500 text-xs mt-2">
                   {connectionStatus === 'connected'
-                    ? 'Alarm notifications will appear here when alarms are raised'
+                    ? `Alarm notifications for ${machineId} will appear here when alarms are raised`
                     : 'Connect to WebSocket to receive real-time alarm notifications'}
                 </p>
               </div>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {events.map((event, index) => (
+                {filteredEvents.map((event, index) => (
                   <div
                     key={`${event.timestamp}-${index}`}
                     className={`p-3 rounded border ${
