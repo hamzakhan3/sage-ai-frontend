@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { AlarmInstructions } from './AlarmInstructions';
 
 interface AlarmEvent {
   timestamp: string;
@@ -15,6 +16,7 @@ interface AlarmEvent {
 
 interface AlarmEventsProps {
   machineId?: string;
+  machineType?: 'bottlefiller' | 'lathe';
 }
 
 interface WebSocketAlarm {
@@ -25,12 +27,13 @@ interface WebSocketAlarm {
   timestamp: string;
 }
 
-export function AlarmEvents({ machineId = 'machine-01' }: AlarmEventsProps) {
+export function AlarmEvents({ machineId = 'machine-01', machineType }: AlarmEventsProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const wsRef = useRef<WebSocket | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
   const [events, setEvents] = useState<AlarmEvent[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('connecting');
+  const [selectedAlarm, setSelectedAlarm] = useState<{ alarmType: string; machineType: 'bottlefiller' | 'lathe'; state: 'RAISED' | 'CLEARED' } | null>(null);
 
   // WebSocket connection for real-time notifications
   useEffect(() => {
@@ -269,38 +272,71 @@ export function AlarmEvents({ machineId = 'machine-01' }: AlarmEventsProps) {
               </div>
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {filteredEvents.map((event, index) => (
-                  <div
-                    key={`${event.timestamp}-${index}`}
-                    className={`p-3 rounded border ${
-                      event.state === 'RAISED'
-                        ? 'bg-red-500/10 border-red-500/30'
-                        : 'bg-green-500/10 border-green-500/30'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className={`text-xs font-bold ${
-                          event.state === 'RAISED' ? 'text-red-400' : 'text-green-400'
-                        }`}>
-                          {event.state === 'RAISED' ? '🚨' : '✅'}
-                        </span>
-                        <div>
-                          <div className="text-dark-text font-medium">{event.alarm_type}</div>
-                          <div className="text-gray-500 text-xs">{formatTime(event.timestamp)}</div>
+                {filteredEvents.map((event, index) => {
+                  // Use provided machineType or determine from machine_id
+                  const eventMachineType: 'bottlefiller' | 'lathe' = 
+                    machineType || (event.machine_id.startsWith('lathe') ? 'lathe' : 'bottlefiller');
+                  
+                  return (
+                    <div
+                      key={`${event.timestamp}-${index}`}
+                      className={`p-3 rounded border ${
+                        event.state === 'RAISED'
+                          ? 'bg-red-500/10 border-red-500/30'
+                          : 'bg-green-500/10 border-green-500/30'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <span className={`text-xs font-bold ${
+                            event.state === 'RAISED' ? 'text-red-400' : 'text-green-400'
+                          }`}>
+                            {event.state === 'RAISED' ? '🚨' : '✅'}
+                          </span>
+                          <div className="flex-1">
+                            <div className="text-dark-text font-medium">{event.alarm_type}</div>
+                            <div className="text-gray-500 text-xs">{formatTime(event.timestamp)}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setSelectedAlarm({
+                              alarmType: event.alarm_type,
+                              machineType: eventMachineType,
+                              state: event.state,
+                            })}
+                            className="text-xs bg-midnight-300 hover:bg-midnight-400 text-dark-text px-2 py-1 rounded transition-colors"
+                          >
+                            📖 Instructions
+                          </button>
+                          <div className="text-xs text-gray-400">
+                            {event.machine_id}
+                          </div>
                         </div>
                       </div>
-                      <div className="text-xs text-gray-400">
-                        {event.machine_id}
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
         )}
       </div>
+
+      {/* Alarm Instructions Modal */}
+      {selectedAlarm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="relative">
+            <AlarmInstructions
+              alarmType={selectedAlarm.alarmType}
+              machineType={selectedAlarm.machineType}
+              state={selectedAlarm.state}
+              machineId={machineId}
+              onClose={() => setSelectedAlarm(null)}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
