@@ -8,10 +8,12 @@ topic write plc/+/bottlefiller/#
 # Mock PLC Agent - Can publish to PLC topics for any machine
 user mock_plc_agent
 topic write plc/+/bottlefiller/#
+topic write plc/+/lathe/#
 
 # InfluxDB Writer (IT Network) - Can subscribe to PLC topics for any machine
 user influxdb_writer
 topic read plc/+/bottlefiller/#
+topic read plc/+/lathe/#
 
 # Admin user - Full access
 user admin
