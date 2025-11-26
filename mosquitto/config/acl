@@ -5,6 +5,10 @@
 user edge_gateway
 topic write plc/+/bottlefiller/#
 
+# Mock PLC Agent - Can publish to PLC topics for any machine
+user mock_plc_agent
+topic write plc/+/bottlefiller/#
+
 # InfluxDB Writer (IT Network) - Can subscribe to PLC topics for any machine
 user influxdb_writer
 topic read plc/+/bottlefiller/#
