@@ -365,7 +365,7 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
                     {loading.influxdb_writer ? '⏳ Stopping Writer...' : '⏹ Stop Writer'}
                   </button>
                 </>
-              )}
+              ) : null}
             </div>
           </div>
           
