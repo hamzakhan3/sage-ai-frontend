@@ -8,7 +8,7 @@ export default function ChatPage() {
   const [isChatMinimized, setIsChatMinimized] = useState(false);
 
   return (
-    <div className="flex h-screen bg-dark-bg overflow-hidden relative">
+    <div className="flex h-full bg-dark-bg overflow-hidden relative">
       {/* Canvas in the middle */}
       <Canvas />
       
