@@ -35,7 +35,7 @@ export function GaugePanel({ field, label, max, unit = '', machineId = 'machine-
   const percentage = Math.min((value / max) * 100, 100);
   
   // Determine color based on percentage
-  let color = '#4caf50'; // green
+  let color = '#437874'; // sage green
   if (percentage > 80) color = '#ffc107'; // yellow
   if (percentage > 95) color = '#f44336'; // red
 

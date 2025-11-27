@@ -66,7 +66,7 @@ function AlarmItem({ label, active }: { label: string; active: boolean }) {
     <div className="flex items-center justify-between">
       <span className="text-dark-text text-sm">{label}</span>
       <div className="flex items-center gap-2">
-        <span className={`text-sm ${active ? 'text-red-400' : 'text-green-400'}`}>
+        <span className={`text-sm ${active ? 'text-red-400' : 'text-sage-400'}`}>
           <span className="flex items-center gap-1">
             {active ? (
               <>
@@ -81,7 +81,7 @@ function AlarmItem({ label, active }: { label: string; active: boolean }) {
             )}
           </span>
         </span>
-        <div className={`w-2 h-2 rounded-full ${active ? 'bg-red-500' : 'bg-green-500'}`} />
+        <div className={`w-2 h-2 rounded-full ${active ? 'bg-red-500' : 'bg-sage-500'}`} />
       </div>
     </div>
   );

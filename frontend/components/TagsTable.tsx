@@ -190,11 +190,11 @@ export function TagsTable({ machineId = 'machine-01', machineType }: TagsTablePr
   const getStatusColor = (value: any, type: string, isAlarm: boolean = false) => {
     if (type === 'boolean') {
       if (isAlarm) {
-        // For alarms: true = active (red), false = OK (green)
-        return value ? 'text-red-400' : 'text-green-400';
+        // For alarms: true = active (red), false = OK (sage)
+        return value ? 'text-red-400' : 'text-sage-400';
       }
-      // For status fields: true = good (green), false = bad (gray)
-      return value ? 'text-green-400' : 'text-gray-400';
+      // For status fields: true = good (sage), false = bad (gray)
+      return value ? 'text-sage-400' : 'text-gray-400';
     }
     return 'text-white';
   };
@@ -255,12 +255,12 @@ export function TagsTable({ machineId = 'machine-01', machineType }: TagsTablePr
                 <div 
                   key={field.label} 
                   className={`border border-dark-border rounded-lg p-4 hover:border-midnight-300 transition-colors ${
-                    field.value ? 'bg-green-500/10' : 'bg-gray-800/30'
+                    field.value ? 'bg-sage-500/10' : 'bg-gray-800/30'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-gray-400 text-sm">{field.label}</span>
-                    <div className={`w-3 h-3 rounded-full ${field.value ? 'bg-green-500' : 'bg-gray-600'}`} />
+                    <div className={`w-3 h-3 rounded-full ${field.value ? 'bg-sage-500' : 'bg-gray-600'}`} />
                   </div>
                   <div className={`text-xl font-bold ${getStatusColor(field.value, field.type)}`}>
                     {field.value ? '✓' : '✗'} {formatValue(field.value, field.type)}
@@ -347,12 +347,12 @@ export function TagsTable({ machineId = 'machine-01', machineType }: TagsTablePr
                 <div 
                   key={field.label} 
                   className={`border border-dark-border rounded-lg p-4 hover:border-midnight-300 transition-colors ${
-                    field.value ? 'bg-green-500/10' : 'bg-gray-800/30'
+                    field.value ? 'bg-sage-500/10' : 'bg-gray-800/30'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-gray-400 text-sm">{field.label}</span>
-                    <div className={`w-3 h-3 rounded-full ${field.value ? 'bg-green-500' : 'bg-gray-600'}`} />
+                    <div className={`w-3 h-3 rounded-full ${field.value ? 'bg-sage-500' : 'bg-gray-600'}`} />
                   </div>
                   <div className={`text-xl font-bold ${getStatusColor(field.value, field.type)}`}>
                     {field.value ? '✓' : '✗'} {formatValue(field.value, field.type)}

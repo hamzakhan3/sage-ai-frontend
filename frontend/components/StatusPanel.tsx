@@ -86,7 +86,7 @@ function StatusItem({
   color: 'green' | 'red' | 'yellow' | 'grey';
 }) {
   const colorClasses = {
-    green: value ? 'bg-green-500' : 'bg-gray-600',
+    green: value ? 'bg-sage-500' : 'bg-gray-600',
     red: value ? 'bg-red-500' : 'bg-gray-600',
     yellow: value ? 'bg-yellow-500' : 'bg-gray-600',
     grey: 'bg-gray-600',

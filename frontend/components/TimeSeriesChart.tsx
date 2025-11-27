@@ -99,9 +99,9 @@ export function TimeSeriesChart({
           <Line 
             type="monotone" 
             dataKey="value" 
-            stroke="#4caf50" 
+            stroke="#437874" 
             strokeWidth={2}
-            dot={{ fill: '#4caf50', r: 3 }}
+            dot={{ fill: '#437874', r: 3 }}
           />
         </LineChart>
       </ResponsiveContainer>

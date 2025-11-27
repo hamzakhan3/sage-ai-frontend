@@ -401,8 +401,8 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-3">
               <span className="text-white font-medium">Step 1: InfluxDB Writer</span>
-              <div className={`w-3 h-3 rounded-full ${influxdbRunning ? 'bg-green-500 animate-pulse' : 'bg-gray-600'}`} />
-              <span className={`text-xs font-medium ${influxdbRunning ? 'text-green-400' : 'text-gray-500'}`}>
+              <div className={`w-3 h-3 rounded-full ${influxdbRunning ? 'bg-sage-500 animate-pulse' : 'bg-gray-600'}`} />
+              <span className={`text-xs font-medium ${influxdbRunning ? 'text-sage-400' : 'text-gray-500'}`}>
                 {influxdbRunning ? 'Running' : 'Stopped'}
               </span>
             </div>
@@ -411,7 +411,7 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
                 <button
                   onClick={() => startService('influxdb_writer')}
                   disabled={loading.influxdb_writer}
-                  className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium transition-colors shadow-lg hover:shadow-green-500/50"
+                  className="bg-sage-600 hover:bg-sage-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium transition-colors shadow-lg hover:shadow-sage-500/50"
                 >
                   <span className="flex items-center gap-1.5">
                     <PlayIcon className="w-4 h-4" />
@@ -421,7 +421,7 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
               ) : loading.influxdb_writer && !influxdbRunning ? (
                 <button
                   disabled
-                  className="bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium"
+                  className="bg-sage-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium"
                 >
                   <span className="flex items-center gap-1.5">
                     <ClockIcon className="w-4 h-4" />
@@ -449,7 +449,7 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
                   <button
                     onClick={() => stopService('influxdb_writer')}
                     disabled={loading.influxdb_writer}
-                    className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium transition-colors shadow-lg hover:shadow-red-500/50"
+                    className="bg-red-500 hover:bg-red-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium transition-colors shadow-lg hover:shadow-red-500/50"
                   >
                     <span className="flex items-center gap-1.5">
                       <StopIcon className="w-4 h-4" />
@@ -465,7 +465,7 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
           {!influxdbRunning && (
             <div className="mt-2 p-2 bg-black/50 rounded text-xs font-mono text-gray-400 border border-dark-border">
               <span className="text-gray-500">$ </span>
-              <span className="text-green-400">{getCommand('influxdb_writer')}</span>
+              <span className="text-sage-400">{getCommand('influxdb_writer')}</span>
             </div>
           )}
 
@@ -489,8 +489,8 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
           <div className="flex items-center justify-between p-2 bg-dark-bg/50 rounded border border-dark-border">
             <div className="flex items-center gap-3">
               <span className="text-white font-medium">Step 2: Mock PLC ({machineId})</span>
-              <div className={`w-3 h-3 rounded-full ${machineRunning ? 'bg-green-500 animate-pulse' : 'bg-gray-600'}`} />
-              <span className={`text-xs font-medium ${machineRunning ? 'text-green-400' : 'text-gray-500'}`}>
+              <div className={`w-3 h-3 rounded-full ${machineRunning ? 'bg-sage-500 animate-pulse' : 'bg-gray-600'}`} />
+              <span className={`text-xs font-medium ${machineRunning ? 'text-sage-400' : 'text-gray-500'}`}>
                 {machineRunning ? 'Running' : 'Stopped'}
               </span>
             </div>
@@ -498,7 +498,7 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
               {!machineRunning && !loading.mock_plc ? (
                 <button
                   onClick={() => startService('mock_plc')}
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded text-sm font-medium transition-colors shadow-lg hover:shadow-green-500/50"
+                  className="bg-sage-600 hover:bg-sage-700 text-white px-6 py-2 rounded text-sm font-medium transition-colors shadow-lg hover:shadow-sage-500/50"
                 >
                   <span className="flex items-center gap-1.5">
                     <PlayIcon className="w-4 h-4" />
@@ -509,7 +509,7 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
                 <button
                   onClick={() => stopService('mock_plc')}
                   disabled={loading.mock_plc}
-                  className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium transition-colors shadow-lg hover:shadow-red-500/50"
+                  className="bg-red-500 hover:bg-red-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium transition-colors shadow-lg hover:shadow-red-500/50"
                 >
                   <span className="flex items-center gap-1.5">
                     {loading.mock_plc ? (
@@ -528,7 +528,7 @@ export function ServiceControls({ machineId }: ServiceControlsProps) {
               ) : loading.mock_plc ? (
                 <button
                   disabled
-                  className="bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium"
+                  className="bg-sage-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white px-6 py-2 rounded text-sm font-medium"
                 >
                   <span className="flex items-center gap-1.5">
                     <ClockIcon className="w-4 h-4" />

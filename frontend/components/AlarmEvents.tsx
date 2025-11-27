@@ -67,13 +67,27 @@ export function AlarmEvents({ machineId = 'machine-01', machineType }: AlarmEven
           
           // Only show toast notification when alarm is RAISED (goes true)
           if (alarm.state === 'RAISED') {
-            toast.error(`🚨 ${message}`, {
-              position: 'top-right',
-              autoClose: 5000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-            });
+            toast.error(
+              <div className="flex items-center gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center border border-red-500/30">
+                  <AlertIcon className="w-5 h-5 text-red-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white font-semibold text-sm mb-0.5">Alarm Raised</div>
+                  <div className="text-gray-400 text-xs truncate">{message}</div>
+                  <div className="text-gray-500 text-xs mt-1">{alarm.machine_id}</div>
+                </div>
+              </div>,
+              {
+                position: 'top-right',
+                autoClose: 6000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                className: 'custom-toast',
+                bodyClassName: 'custom-toast-body',
+              }
+            );
           }
           // No toast for CLEARED alarms - silent update only
           
@@ -172,7 +186,7 @@ export function AlarmEvents({ machineId = 'machine-01', machineType }: AlarmEven
   const getConnectionStatusColor = () => {
     switch (connectionStatus) {
       case 'connected':
-        return 'text-green-400';
+        return 'text-sage-400';
       case 'connecting':
         return 'text-yellow-400';
       case 'disconnected':
@@ -202,7 +216,7 @@ export function AlarmEvents({ machineId = 'machine-01', machineType }: AlarmEven
     <>
       <ToastContainer
         position="top-right"
-        autoClose={5000}
+        autoClose={6000}
         newestOnTop
         closeOnClick
         rtl={false}
@@ -210,6 +224,9 @@ export function AlarmEvents({ machineId = 'machine-01', machineType }: AlarmEven
         draggable
         pauseOnHover
         theme="dark"
+        limit={5}
+        toastClassName="custom-toast"
+        bodyClassName="custom-toast-body"
       />
       
       <div className="bg-dark-panel p-6 rounded-lg border border-dark-border">
@@ -265,8 +282,8 @@ export function AlarmEvents({ machineId = 'machine-01', machineType }: AlarmEven
             )}
 
             {filteredEvents.length === 0 ? (
-              <div className="p-4 bg-green-500/10 border border-green-500/30 rounded text-center">
-                <span className="text-green-400 text-sm">
+              <div className="p-4 bg-sage-500/10 border border-sage-500/30 rounded text-center">
+                <span className="text-sage-400 text-sm">
                   {connectionStatus === 'connected' 
                     ? (
                       <span className="flex items-center gap-1.5 justify-center">
@@ -295,7 +312,7 @@ export function AlarmEvents({ machineId = 'machine-01', machineType }: AlarmEven
                       className={`p-3 rounded border ${
                         event.state === 'RAISED'
                           ? 'bg-red-500/10 border-red-500/30'
-                          : 'bg-green-500/10 border-green-500/30'
+                          : 'bg-sage-500/10 border-sage-500/30'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -303,7 +320,7 @@ export function AlarmEvents({ machineId = 'machine-01', machineType }: AlarmEven
                           {event.state === 'RAISED' ? (
                             <AlertIcon className="w-4 h-4 text-red-400" />
                           ) : (
-                            <CheckIcon className="w-4 h-4 text-green-400" />
+                            <CheckIcon className="w-4 h-4 text-sage-400" />
                           )}
                           <div className="flex-1">
                             <div className="text-dark-text font-medium">{event.alarm_type}</div>

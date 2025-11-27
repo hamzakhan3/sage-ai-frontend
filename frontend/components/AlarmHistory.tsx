@@ -103,7 +103,7 @@ export function AlarmHistory({ machineId = 'machine-01', timeRange = '-24h', mac
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className={`text-lg font-bold ${count > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                    <span className={`text-lg font-bold ${count > 0 ? 'text-red-400' : 'text-sage-400'}`}>
                       {count}
                     </span>
                     <span className="text-gray-500 text-sm">occurrences</span>
@@ -114,8 +114,8 @@ export function AlarmHistory({ machineId = 'machine-01', timeRange = '-24h', mac
           </div>
           
           {totalAlarms === 0 && (
-            <div className="mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded text-center">
-              <span className="text-green-400 text-sm flex items-center gap-1.5">
+            <div className="mt-4 p-4 bg-sage-500/10 border border-sage-500/30 rounded text-center">
+              <span className="text-sage-400 text-sm flex items-center gap-1.5">
                 <CheckIcon className="w-4 h-4" />
                 No alarms triggered in last 24 hours
               </span>

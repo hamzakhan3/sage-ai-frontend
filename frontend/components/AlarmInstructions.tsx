@@ -250,7 +250,7 @@ export function AlarmInstructions({
               </>
             ) : (
               <>
-                <CheckIcon className="w-5 h-5 text-green-400" />
+                <CheckIcon className="w-5 h-5 text-sage-400" />
                 <span>Issue Resolved</span>
               </>
             )}
