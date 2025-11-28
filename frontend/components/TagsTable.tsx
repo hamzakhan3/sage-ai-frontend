@@ -36,7 +36,7 @@ export function TagsTable({ machineId = 'machine-01', machineType }: TagsTablePr
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity mb-4"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <h3 className="heading-inter heading-inter-sm">All Tag Values</h3>
+          <h3 className="heading-inter heading-inter-sm">Tag Values</h3>
           {isExpanded ? <ChevronDownIcon className="w-3 h-3 text-gray-500" /> : <ChevronRightIcon className="w-3 h-3 text-gray-500" />}
         </div>
         {isExpanded && <div className="text-gray-400">Loading...</div>}
@@ -51,7 +51,7 @@ export function TagsTable({ machineId = 'machine-01', machineType }: TagsTablePr
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity mb-4"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <h3 className="heading-inter heading-inter-sm">All Tag Values</h3>
+          <h3 className="heading-inter heading-inter-sm">Tag Values</h3>
           {isExpanded ? <ChevronDownIcon className="w-3 h-3 text-gray-500" /> : <ChevronRightIcon className="w-3 h-3 text-gray-500" />}
         </div>
         {isExpanded && <div className="text-red-400">Error loading data</div>}
@@ -69,7 +69,7 @@ export function TagsTable({ machineId = 'machine-01', machineType }: TagsTablePr
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity mb-4"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          <h3 className="heading-inter heading-inter-sm">All Tag Values</h3>
+          <h3 className="heading-inter heading-inter-sm">Tag Values</h3>
           {isExpanded ? <ChevronDownIcon className="w-3 h-3 text-gray-500" /> : <ChevronRightIcon className="w-3 h-3 text-gray-500" />}
         </div>
         {isExpanded && (
@@ -95,7 +95,7 @@ export function TagsTable({ machineId = 'machine-01', machineType }: TagsTablePr
   if (!data) {
     return (
       <div className="bg-dark-panel p-6 rounded-lg border border-dark-border">
-        <h3 className="heading-inter heading-inter-sm mb-4">All Tag Values</h3>
+        <h3 className="heading-inter heading-inter-sm mb-4">Tag Values</h3>
         <div className="text-red-400">Error loading data</div>
       </div>
     );
@@ -221,7 +221,7 @@ export function TagsTable({ machineId = 'machine-01', machineType }: TagsTablePr
         className="flex items-center gap-2 mb-4 cursor-pointer hover:opacity-80 transition-opacity"
         onClick={() => setIsExpanded(!isExpanded)}
       >
-        <h3 className="text-white text-lg font-semibold">All Tag Values</h3>
+        <h3 className="text-white text-lg font-semibold">Tag Values</h3>
         {isExpanded ? <ChevronDownIcon className="w-3 h-3 text-gray-500" /> : <ChevronRightIcon className="w-3 h-3 text-gray-500" />}
       </div>
 

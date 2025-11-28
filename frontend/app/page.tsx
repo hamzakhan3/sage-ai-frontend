@@ -113,7 +113,7 @@ export default function Dashboard() {
                     : 'text-gray-400 hover:text-gray-300'
                 }`}
               >
-                Sensor Data (Vibration)
+                Vibration (mm/s)
               </button>
             </div>
             

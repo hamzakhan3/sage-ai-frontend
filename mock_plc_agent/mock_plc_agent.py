@@ -103,11 +103,11 @@ class BottleFillerTags:
                 "BottlesPerMinute": bottles_per_minute,
             },
             "alarms": {
-                "LowProductLevel": random.random() > 0.95,
-                "Overfill": False,
-                "Underfill": False,
-                "NoBottle": not self.filling,
-                "CapMissing": random.random() > 0.9 if self.filling else False,
+                "LowProductLevel": random.random() > 0.94,  # 6% chance
+                "Overfill": random.random() > 0.96,  # 4% chance
+                "Underfill": random.random() > 0.95,  # 5% chance
+                "NoBottle": not self.filling,  # Only when not filling
+                "CapMissing": random.random() > 0.93 if self.filling else False,  # 7% chance when filling
             }
         }
         
