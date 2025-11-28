@@ -182,6 +182,7 @@ def main():
             'machine_type': str(machine_type),
             'alarm_type': str(metadata.get('alarm_type', '')),
             'severity': str(metadata.get('severity', '')),
+            'document_type': 'alarm_response_manual',
             'content': str(content[:1000])  # Store first 1000 chars for reference
         }
         
