@@ -3,6 +3,7 @@
 Alarm Monitor - Subscribes to MQTT and tracks alarm state transitions
 Stores alarm events with timestamps for real-time display
 Broadcasts alarm changes via WebSocket for real-time UI notifications
+Saves alarm events to InfluxDB for persistent storage
 """
 import asyncio
 import paho.mqtt.client as mqtt
@@ -14,6 +15,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 import websockets
 from threading import Thread
+from influxdb_client import InfluxDBClient, Point
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 # MQTT Configuration
 MQTT_BROKER = os.getenv("MQTT_BROKER_HOST", "localhost")
@@ -34,6 +37,12 @@ WS_PORT = int(os.getenv("WS_PORT", "8765"))
 ALARM_EVENTS_FILE = os.getenv("ALARM_EVENTS_FILE", "/tmp/alarm_events.json")
 MAX_EVENTS = 1000  # Keep last 1000 events
 
+# InfluxDB Configuration for alarm events
+INFLUXDB_URL = os.getenv("INFLUXDB_URL", "http://localhost:8086")
+INFLUXDB_TOKEN = os.getenv("INFLUXDB_TOKEN", "my-super-secret-auth-token")
+INFLUXDB_ORG = os.getenv("INFLUXDB_ORG", "myorg")
+INFLUXDB_BUCKET_ALARMS = os.getenv("INFLUXDB_BUCKET_ALARMS", "alarm_events")  # Separate bucket for alarms
+
 # Track previous alarm states per machine
 previous_alarms = {}
 
@@ -42,6 +51,10 @@ connected_clients = set()
 
 # Global event loop for WebSocket (will be set in main)
 ws_loop = None
+
+# InfluxDB client for alarm events (will be initialized in main)
+_influx_client = None
+_influx_write_api = None
 
 def load_alarm_events():
     """Load alarm events from file"""
@@ -52,6 +65,33 @@ def load_alarm_events():
         except:
             return []
     return []
+
+def save_alarm_to_influxdb(event):
+    """Save alarm event to InfluxDB for persistent storage"""
+    global _influx_write_api
+    
+    if _influx_write_api is None:
+        return  # InfluxDB not initialized, skip silently
+    
+    try:
+        # Parse timestamp
+        timestamp = datetime.fromisoformat(event["timestamp"].replace('Z', '+00:00'))
+        
+        # Create InfluxDB point
+        point = Point("alarm_events") \
+            .tag("machine_id", event["machine_id"]) \
+            .tag("alarm_type", event["alarm_type"]) \
+            .tag("alarm_name", event.get("alarm_name", event["alarm_type"])) \
+            .tag("state", event["state"]) \
+            .field("value", event["value"]) \
+            .field("alarm_label", event.get("alarm_label", event["alarm_type"])) \
+            .time(timestamp)
+        
+        # Write to InfluxDB
+        _influx_write_api.write(bucket=INFLUXDB_BUCKET_ALARMS, record=point)
+        print(f"💾 Saved alarm event to InfluxDB: {event['machine_id']} - {event['alarm_type']} ({event['state']})")
+    except Exception as e:
+        print(f"⚠️  Error saving alarm to InfluxDB: {e}")
 
 def save_alarm_event(event):
     """Save alarm event to file (append) - for debugging/verification"""
@@ -64,6 +104,9 @@ def save_alarm_event(event):
     
     with open(ALARM_EVENTS_FILE, 'w') as f:
         json.dump(events, f, indent=2)
+    
+    # Also save to InfluxDB for persistent storage
+    save_alarm_to_influxdb(event)
 
 async def broadcast_alarm(message):
     """Broadcast alarm event to all connected WebSocket clients"""
@@ -96,12 +139,12 @@ def check_alarm_transitions(machine_id, alarms, timestamp, machine_type="bottlef
             "coolant_low": "AlarmCoolantLow",
         }
     else:  # bottlefiller
-    alarm_map = {
-        "Overfill": "AlarmOverfill",
-        "Underfill": "AlarmUnderfill",
-        "LowProductLevel": "AlarmLowProductLevel",
-        "CapMissing": "AlarmCapMissing",
-    }
+        alarm_map = {
+            "Overfill": "AlarmOverfill",
+            "Underfill": "AlarmUnderfill",
+            "LowProductLevel": "AlarmLowProductLevel",
+            "CapMissing": "AlarmCapMissing",
+        }
     
     # Get previous state for this machine
     prev = previous_alarms.get(machine_id, {})
@@ -213,15 +256,15 @@ def on_message(client, userdata, msg):
             if "coolant_low" in payload:
                 alarms["coolant_low"] = payload["coolant_low"]
         else:  # bottlefiller
-        # Map alarm names from MQTT to our tracking format
-        if "LowProductLevel" in payload:
-            alarms["LowProductLevel"] = payload["LowProductLevel"]
-        if "Overfill" in payload:
-            alarms["Overfill"] = payload["Overfill"]
-        if "Underfill" in payload:
-            alarms["Underfill"] = payload["Underfill"]
-        if "CapMissing" in payload:
-            alarms["CapMissing"] = payload["CapMissing"]
+            # Map alarm names from MQTT to our tracking format
+            if "LowProductLevel" in payload:
+                alarms["LowProductLevel"] = payload["LowProductLevel"]
+            if "Overfill" in payload:
+                alarms["Overfill"] = payload["Overfill"]
+            if "Underfill" in payload:
+                alarms["Underfill"] = payload["Underfill"]
+            if "CapMissing" in payload:
+                alarms["CapMissing"] = payload["CapMissing"]
         # NoBottle is in MQTT but we don't track it
         
         # Check for alarm transitions
@@ -288,6 +331,23 @@ if __name__ == "__main__":
     print(f"💾 Events file: {ALARM_EVENTS_FILE} (for debugging)")
     print(f"🌐 WebSocket: ws://{WS_HOST}:{WS_PORT}")
     print(f"⚠️  Tracking: Overfill, Underfill, LowProductLevel, CapMissing\n")
+    
+    # Initialize InfluxDB client for alarm events
+    print(f"🔗 Connecting to InfluxDB for alarm storage...")
+    try:
+        _influx_client = InfluxDBClient(
+            url=INFLUXDB_URL,
+            token=INFLUXDB_TOKEN,
+            org=INFLUXDB_ORG
+        )
+        _influx_write_api = _influx_client.write_api(write_options=SYNCHRONOUS)
+        print(f"✅ Connected to InfluxDB")
+        print(f"   Bucket: {INFLUXDB_BUCKET_ALARMS}\n")
+    except Exception as e:
+        print(f"⚠️  InfluxDB connection error (alarms will still be saved to file): {e}")
+        print(f"   Continuing without InfluxDB storage...\n")
+        _influx_client = None
+        _influx_write_api = None
     
     # Start WebSocket server in a separate thread
     ws_thread = Thread(target=run_websocket_server, daemon=True)
