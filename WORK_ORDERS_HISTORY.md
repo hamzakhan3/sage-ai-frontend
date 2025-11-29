@@ -218,3 +218,113 @@ Inspect spindle assembly for excessive wear or damage. Check spindle bearings fo
 - **Week Of:** 2025-11-28
 
 ---
+
+---
+
+## Work Order: WO-20251129-260
+
+**Created:** 2025-11-28 22:25:53  
+**Status:** pending  
+**Priority:** High  
+**Machine ID:** lathe01  
+**Machine Type:** lathe  
+**Alarm Type:**   
+
+### Work Description
+Inspect fill valve operation and verify proper opening mechanism. Check fill level sensor calibration and positioning. Inspect fill valve actuator for mechanical binding or wear. Verify fill flow rate meets specification. Check for blockages in filling lines. Review fill time setpoint and adjust if necessary. Remove and isolate all underfilled bottles. Perform test fills and verify fill volume meets minimum requirements. Document findings and update quality procedures.
+
+### Special Instructions
+- Notify Quality Control before starting work
+- Isolate affected bottles for quality review
+- Verify fill volumes meet regulatory requirements
+- Test on first 10 bottles after repair
+- Document all adjustments
+
+### Equipment Information
+- **Equipment ID:** N/A
+- **Equipment Name:** lathe01
+- **Location:** 
+
+### Task Information
+- **Task Number:** PM-BF-003
+- **Frequency:** As needed (triggered by threshold breach)
+- **Work Performed By:** Maintenance Department
+- **Standard Hours:** 3
+- **Overtime Hours:** 1
+
+### Parts and Components
+- N/A (Qty: 1)
+- N/A (Qty: 1)
+- N/A (Qty: 1)
+- N/A (Qty: 1)
+
+### Materials Used
+- N/A (Qty: 500ml)
+- N/A (Qty: 500ml)
+- N/A (Qty: 50ml)
+
+### Work Performance
+- **Work Performed:** 
+- **Work Completed:** No
+
+### Company Information
+- **Company Name:** MQTT-OT Network Production System
+- **Week Number:** 
+- **Week Of:** 2025-11-29
+
+---
+
+---
+
+## Work Order: WO-20251129-307
+
+**Created:** 2025-11-29 17:23:35  
+**Status:** pending  
+**Priority:** High  
+**Machine ID:** machine-01  
+**Machine Type:** bottlefiller  
+**Alarm Type:** AlarmOverfill  
+
+### Work Description
+Inspect fill valve operation and verify proper opening mechanism. Check fill level sensor calibration and positioning. Inspect fill valve actuator for mechanical binding or wear. Verify fill flow rate meets specification. Check for blockages in filling lines. Review fill time setpoint and adjust if necessary. Remove and isolate all underfilled bottles. Perform test fills and verify fill volume meets minimum requirements. Document findings and update quality procedures.
+
+### Special Instructions
+- Notify Quality Control before starting work
+- Isolate affected bottles for quality review
+- Verify fill volumes meet regulatory requirements
+- Test on first 10 bottles after repair
+- Document all adjustments
+
+### Equipment Information
+- **Equipment ID:** N/A
+- **Equipment Name:** machine-01
+- **Location:** 
+
+### Task Information
+- **Task Number:** PM-BF-003
+- **Frequency:** As needed (triggered by threshold breach)
+- **Work Performed By:** Maintenance Department
+- **Standard Hours:** 3.0
+- **Overtime Hours:** 1.0
+
+### Parts and Components
+- N/A (Qty: 1)
+- N/A (Qty: 1)
+- N/A (Qty: 1)
+- N/A (Qty: 1)
+
+### Materials Used
+- N/A (Qty: 500ml)
+- N/A (Qty: 500ml)
+- N/A (Qty: 50ml)
+
+### Work Performance
+- **Work Performed:** 
+- **Work Completed:** No
+
+### Company Information
+- **Company Name:** MQTT-OT Network Production System
+- **Week Number:** 
+- **Week Of:** 2025-11-29
+
+---
