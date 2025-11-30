@@ -108,7 +108,14 @@ export function buildWorkflow(definition: WorkflowDefinition, onLog?: (message: 
     logBoth(`   Type: ${toolType}`);
     logBoth(`   Label: ${node.data.config?.label || toolType}`);
     logBoth(`   Config: ${JSON.stringify(node.data.config || {})}`);
-    logBoth(`   Current State: machineId=${state.machineId}, hasAlarmData=${!!state.alarmData}, hasPineconeData=${!!state.pineconeData}, hasWorkOrderData=${!!state.workOrderData}`);
+    
+    // Show config values that will be used (especially machineId)
+    const configMachineId = node.data.config?.machineId;
+    if (configMachineId) {
+      logBoth(`   Config machineId: ${configMachineId}`);
+    }
+    
+    logBoth(`   Current State: machineId=${state.machineId || 'undefined'}, hasAlarmData=${!!state.alarmData}, hasPineconeData=${!!state.pineconeData}, hasWorkOrderData=${!!state.workOrderData}`);
 
     // Additional terminal logging for debugging
     console.log(`\n🔄 [WORKFLOW BUILDER] About to execute node: ${nodeId}`);
