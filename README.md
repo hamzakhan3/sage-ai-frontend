@@ -1,283 +1,373 @@
-# MQTT OT Network Architecture
+# MQTT OT Network - Industrial Monitoring & AI Platform
 
-A complete MQTT-based system for simulating and monitoring PLC data on an Operational Technology (OT) network. This project includes a Mosquitto MQTT broker, a mock PLC agent that simulates bottle filler tags, and a data viewer for real-time monitoring.
+A comprehensive industrial IoT platform for real-time monitoring, data visualization, and AI-powered maintenance recommendations for PLC-based manufacturing systems. Supports bottle filler and CNC lathe machines with MQTT pub/sub architecture, time-series data storage, and intelligent workflow automation.
 
-## Architecture Overview
+## 🏗️ Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    OT Network (VLAN/Subnet)              │
-│                                                           │
-│  ┌──────────────┐      ┌──────────────┐                 │
-│  │ MQTT Broker  │      │  Mock PLC    │                 │
-│  │  (Mosquitto) │◄─────┤   Agent      │                 │
-│  │  Port: 1883  │      │  (Publisher) │                 │
-│  │  Port: 9001  │      │              │                 │
-│  └──────┬───────┘      └──────────────┘                 │
-│         │                                                 │
-│         │ MQTT Protocol                                  │
-│         │                                                 │
-│  ┌──────▼───────┐                                        │
-│  │   Data       │                                        │
-│  │  Viewer      │                                        │
-│  │ (Subscriber) │                                        │
-│  └──────────────┘                                        │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         OT Network (Operational Technology)              │
+│                                                                           │
+│  ┌──────────────┐      ┌──────────────┐      ┌──────────────┐          │
+│  │ Mock PLC     │      │ CNC Lathe    │      │ Modbus      │          │
+│  │ Agent        │      │ Simulator    │      │ Server      │          │
+│  │ (Bottle      │      │              │      │             │          │
+│  │  Filler)     │      │              │      │             │          │
+│  └──────┬───────┘      └──────┬───────┘      └──────┬───────┘          │
+│         │                      │                     │                   │
+│         └──────────────────────┼─────────────────────┘                   │
+│                                 │                                         │
+│                          ┌──────▼───────┐                                │
+│                          │ MQTT Broker  │                                │
+│                          │ (Mosquitto)  │                                │
+│                          │ Port: 1883   │                                │
+│                          │ Port: 9001   │                                │
+│                          └──────┬───────┘                                │
+└─────────────────────────────────┼─────────────────────────────────────────┘
+                                  │
+┌─────────────────────────────────┼─────────────────────────────────────────┐
+│                         IT Network (Information Technology)               │
+│                                  │                                         │
+│                          ┌──────▼───────┐                                │
+│                          │ InfluxDB     │                                │
+│                          │ Writer       │                                │
+│                          │ (Python)     │                                │
+│                          └──────┬───────┘                                │
+│                                  │                                         │
+│                          ┌──────▼───────┐                                │
+│                          │ InfluxDB 2.7 │                                │
+│                          │ (Time-Series)│                                │
+│                          │ Port: 8086   │                                │
+│                          └──────┬───────┘                                │
+│                                  │                                         │
+│  ┌───────────────────────────────┼───────────────────────────────┐      │
+│  │                               │                               │      │
+│  ┌──────▼───────┐      ┌─────────▼────────┐      ┌──────────────▼──┐  │
+│  │ Next.js      │      │ Alarm Monitor    │      │ Grafana         │  │
+│  │ Frontend     │      │ (Real-time)      │      │ (Dashboards)    │  │
+│  │ Port: 3005   │      │                  │      │ Port: 3003      │  │
+│  └──────┬───────┘      └──────────────────┘      └──────────────────┘  │
+│         │                                                               │
+│  ┌──────▼──────────────────────────────────────────────────────────┐  │
+│  │ AI Services                                                       │  │
+│  │  - Pinecone (Vector DB) - RAG for maintenance docs              │  │
+│  │  - OpenAI GPT - Chat interface & workflow automation            │  │
+│  │  - LangGraph - Visual workflow builder                          │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
-## Components
+## 🚀 Key Features
 
-### 1. MQTT Broker (Mosquitto)
-- Central message broker for pub/sub communication
-- Ports: 1883 (MQTT), 9001 (WebSocket)
-- Docker-based deployment for portability
+- **Real-time Monitoring**: Live PLC data visualization with charts, gauges, and status panels
+- **Time-Series Storage**: Historical data storage in InfluxDB with queryable time ranges
+- **Multi-Machine Support**: Monitor multiple bottle filler and CNC lathe machines simultaneously
+- **AI-Powered Chat**: RAG-based chat assistant for alarm response and maintenance procedures
+- **Work Order Management**: Generate, track, and manage maintenance work orders with calendar view
+- **Alarm Management**: Real-time alarm monitoring with AI-powered analysis and recommendations
+- **Workflow Automation**: Visual workflow builder using LangGraph for automated processes
+- **Alarm Events History**: Track and analyze alarm events over time
+- **Vibration Analysis**: Monitor CNC lathe vibration data with anomaly detection
 
-### 2. Mock PLC Agent
-- Simulates bottle filler PLC tags
-- Publishes data to MQTT topics every 2 seconds
-- Generates realistic sensor, output, analog, and status data
+## 📋 Prerequisites
 
-### 3. Data Viewer
-- Subscribes to MQTT topics
-- Displays real-time JSON-formatted data
-- Provides summary views of bottle filler status
+- **Docker & Docker Compose** - For running MQTT broker, InfluxDB, and Grafana
+- **Python 3.7+** - For Python services (InfluxDB writer, mock PLC agents, alarm monitor)
+- **Node.js 18+** - For Next.js frontend
+- **npm or yarn** - Package manager for frontend dependencies
 
-## Prerequisites
+## 🛠️ Installation
 
-- Docker and Docker Compose
-- Python 3.7 or higher
-- pip (Python package manager)
+### 1. Clone the Repository
 
-## Installation
+```bash
+git clone https://github.com/hamzakhan3/mqtt-ot-network.git
+cd mqtt-ot-network
+```
 
-1. **Clone or navigate to the project directory:**
-   ```bash
-   cd mqtt-ot-network
-   ```
+### 2. Install Python Dependencies
 
-2. **Install Python dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-3. **Start the MQTT broker:**
-   ```bash
-   docker-compose up -d
-   ```
+### 3. Install Frontend Dependencies
 
-   Verify the broker is running:
-   ```bash
-   docker ps
-   ```
+```bash
+cd frontend
+npm install
+cd ..
+```
 
-## Usage
+### 4. Set Up Environment Variables
 
-### Starting the MQTT Broker
+Create a `.env.local` file in the `frontend` directory:
 
-The broker runs in a Docker container. Start it with:
+```bash
+cd frontend
+cat > .env.local << EOF
+# InfluxDB Configuration
+NEXT_PUBLIC_INFLUXDB_URL=http://localhost:8086
+NEXT_PUBLIC_INFLUXDB_TOKEN=my-super-secret-auth-token
+NEXT_PUBLIC_INFLUXDB_ORG=myorg
+NEXT_PUBLIC_INFLUXDB_BUCKET=plc_data
+
+# Pinecone Configuration (for AI features)
+NEXT_PUBLIC_PINECONE_API_KEY=your-pinecone-api-key
+NEXT_PUBLIC_PINECONE_ENVIRONMENT=your-pinecone-environment
+NEXT_PUBLIC_PINECONE_INDEX=your-index-name
+
+# OpenAI Configuration (for AI features)
+OPENAI_API_KEY=your-openai-api-key
+EOF
+```
+
+## 🚦 Starting the Project
+
+### Step 1: Start Docker Services
+
+Start MQTT broker, InfluxDB, and Grafana:
 
 ```bash
 docker-compose up -d
 ```
 
-Stop it with:
-
+Verify services are running:
 ```bash
-docker-compose down
+docker ps
 ```
 
-View logs:
+You should see:
+- `mqtt-broker` (ports 1883, 9001)
+- `influxdb` (port 8086)
+- `grafana` (port 3003)
+
+### Step 2: Start InfluxDB Writer
+
+The writer subscribes to MQTT and stores data in InfluxDB:
 
 ```bash
-docker-compose logs -f mosquitto
+./start_influxdb_writer.sh
 ```
 
-### Running the Mock PLC Agent
+Or manually:
+```bash
+export MQTT_BROKER_HOST=localhost
+export MQTT_BROKER_PORT=1883
+export INFLUXDB_URL=http://localhost:8086
+export INFLUXDB_TOKEN=my-super-secret-auth-token
+export INFLUXDB_ORG=myorg
+export INFLUXDB_BUCKET=plc_data
 
-The agent publishes bottle filler tag data to MQTT topics:
+python3 influxdb_writer/influxdb_writer_production.py
+```
+
+### Step 3: Start Mock PLC Agents
+
+**For Bottle Filler Machines:**
 
 ```bash
-python mock_plc_agent/mock_plc_agent.py
+# Machine 01
+./start_mock_plc.sh machine-01
+
+# Machine 02 (in another terminal)
+./start_mock_plc.sh machine-02
+
+# Machine 03 (in another terminal)
+./start_mock_plc.sh machine-03
+
+# Or start all at once (macOS)
+./start_all_machines.sh
 ```
 
-**Environment Variables:**
-- `MQTT_BROKER_HOST`: Broker IP address (default: `localhost`)
-- `MQTT_BROKER_PORT`: Broker port (default: `1883`)
-- `PUBLISH_INTERVAL`: Publish rate in seconds (default: `2.0`)
-
-**Example:**
-```bash
-MQTT_BROKER_HOST=192.168.1.100 python mock_plc_agent/mock_plc_agent.py
-```
-
-### Running the Data Viewer
-
-The viewer subscribes to MQTT topics and displays received messages:
+**For CNC Lathe Machines:**
 
 ```bash
-python data_viewer/mqtt_subscriber.py
+./start_lathe_sim.sh lathe01
 ```
 
-**Environment Variables:**
-- `MQTT_BROKER_HOST`: Broker IP address (default: `localhost`)
-- `MQTT_BROKER_PORT`: Broker port (default: `1883`)
-- `MQTT_TOPIC`: Topic to subscribe to (default: `plc/bottlefiller/#`)
+### Step 4: Start Alarm Monitor (Optional)
 
-**Example:**
-```bash
-MQTT_BROKER_HOST=192.168.1.100 python data_viewer/mqtt_subscriber.py
-```
-
-## MQTT Topics
-
-The mock PLC agent publishes to the following topics:
-
-- `plc/bottlefiller/data` - Complete dataset with all tags
-- `plc/bottlefiller/inputs` - Input sensor tags
-- `plc/bottlefiller/outputs` - Output actuator tags
-- `plc/bottlefiller/analog` - Analog sensor values
-- `plc/bottlefiller/status` - System status flags
-- `plc/bottlefiller/counters` - Production counters
-- `plc/bottlefiller/alarms` - Alarm states
-
-## Bottle Filler Tags
-
-The mock agent simulates the following PLC tags:
-
-### Input Tags
-- `BottlePresent` - Photoeye detects bottle
-- `BottleAtFill` - Bottle in fill position
-- `BottleAtCap` - Bottle at capping station
-- `LowLevel` - Low product level sensor
-- `HighLevel` - High product level sensor
-- `CapPresent` - Cap detection sensor
-
-### Output Tags
-- `FillValve` - Fill valve open/close
-- `ConveyorMotor` - Conveyor motor run/stop
-- `CappingMotor` - Capping motor run/stop
-- `IndicatorGreen` - Green status light
-- `IndicatorRed` - Red status light
-- `IndicatorYellow` - Yellow warning light
-
-### Analog Tags
-- `FillLevel` - Current fill level (0-100%)
-- `FillFlowRate` - Flow rate (L/min)
-- `TankTemperature` - Product temperature (°C)
-- `TankPressure` - Tank pressure (PSI)
-- `ConveyorSpeed` - Conveyor speed (RPM)
-
-### Status Tags
-- `SystemRunning` - System is running
-- `Filling` - Currently filling
-- `Ready` - System ready
-- `Fault` - Fault condition active
-- `AutoMode` - Auto mode selected
-
-### Counter Tags
-- `BottlesFilled` - Total bottles filled
-- `BottlesRejected` - Total bottles rejected
-- `BottlesPerMinute` - Production rate
-
-## OT Network Configuration
-
-For deployment on an OT network:
-
-1. **Update broker IP address:**
-   - Set `MQTT_BROKER_HOST` environment variable to your OT network IP
-   - Or modify the default in `mock_plc_agent/config.py` and `data_viewer/mqtt_subscriber.py`
-
-2. **Network isolation:**
-   - Configure firewall rules for ports 1883 and 9001
-   - Use VLANs or network segmentation
-   - Consider static IP assignment for the broker
-
-3. **Security (Production):**
-   - Enable authentication in `mosquitto/config/mosquitto.conf`
-   - Set `allow_anonymous false`
-   - Create password file: `mosquitto_passwd -c mosquitto/config/passwd plc_user`
-   - Add TLS/SSL encryption for port 8883
-
-## Testing
-
-### Test Broker Connection
-
-Use `mosquitto_pub` and `mosquitto_sub` (if installed):
+For real-time alarm monitoring:
 
 ```bash
-# Subscribe
-mosquitto_sub -h localhost -t "plc/bottlefiller/#" -v
-
-# Publish test message
-mosquitto_pub -h localhost -t "plc/bottlefiller/test" -m "Hello MQTT"
+./start_alarm_monitor.sh
 ```
 
-### End-to-End Test
+### Step 5: Start Frontend
 
-1. Start the broker: `docker-compose up -d`
-2. Start the agent: `python mock_plc_agent/mock_plc_agent.py`
-3. Start the viewer: `python data_viewer/mqtt_subscriber.py`
+```bash
+cd frontend
+npm run dev
+```
 
-You should see data flowing from the agent to the viewer.
+The frontend will be available at `http://localhost:3005`
 
-## Troubleshooting
-
-### Broker not starting
-- Check Docker is running: `docker ps`
-- Check port availability: `netstat -an | grep 1883`
-- View broker logs: `docker-compose logs mosquitto`
-
-### Connection refused
-- Verify broker is running: `docker ps`
-- Check broker IP address matches configuration
-- Verify firewall rules allow MQTT ports
-
-### No messages received
-- Verify topic subscription matches publication
-- Check QoS levels (should be 1 for reliable delivery)
-- Verify network connectivity between components
-
-## File Structure
+## 📁 Project Structure
 
 ```
 mqtt-ot-network/
-├── docker-compose.yml          # Docker orchestration
+├── frontend/                    # Next.js frontend application
+│   ├── app/                     # Next.js app router pages
+│   │   ├── page.tsx            # Main dashboard
+│   │   ├── chat/               # AI chat interface
+│   │   ├── work-orders/        # Work order management
+│   │   ├── alarm-events/       # Alarm events history
+│   │   └── workflows/          # Visual workflow builder
+│   ├── components/             # React components
+│   ├── lib/                    # Utility libraries
+│   └── hooks/                  # Custom React hooks
+│
+├── mock_plc_agent/            # Mock PLC agent (bottle filler)
+├── lathe_sim/                  # CNC lathe simulator
+├── influxdb_writer/            # MQTT to InfluxDB writer
+├── alarm_monitor/             # Real-time alarm monitor
+├── modbus_server/             # Modbus TCP server
+├── modbus_reader/             # Modbus client
+│
+├── mosquitto/                  # MQTT broker configuration
+├── influxdb/                   # InfluxDB data and config
+├── grafana/                    # Grafana dashboards
+│
+├── docker-compose.yml          # Docker services configuration
 ├── requirements.txt            # Python dependencies
-├── README.md                   # This file
-│
-├── mosquitto/
-│   ├── config/
-│   │   └── mosquitto.conf      # Broker configuration
-│   ├── data/                   # Persistence directory
-│   └── log/                    # Log files directory
-│
-├── mock_plc_agent/
-│   ├── mock_plc_agent.py       # Main publisher script
-│   └── config.py               # Agent configuration
-│
-├── data_viewer/
-│   ├── mqtt_subscriber.py      # Subscriber script
-│   └── display_formatter.py    # Data formatting utilities
-│
-└── docs/
-    └── architecture.md         # Architecture documentation
+└── README.md                   # This file
 ```
 
-## Future Enhancements
+## 🔧 Configuration
 
-- TLS/SSL encryption support
-- Username/password authentication
-- Database integration for historical data
-- Web-based dashboard (using WebSocket on port 9001)
-- Multiple PLC agent instances
-- Broker clustering for high availability
-- Message queuing for offline subscribers
+### InfluxDB Setup
 
-## License
+Default credentials (change in production):
+- **URL**: `http://localhost:8086`
+- **Username**: `admin`
+- **Password**: `admin123`
+- **Organization**: `myorg`
+- **Bucket**: `plc_data`
+- **Token**: `my-super-secret-auth-token`
+
+### MQTT Configuration
+
+- **Port 1883**: Non-TLS MQTT (development)
+- **Port 8883**: TLS MQTT (production)
+- **Port 9001**: WebSocket
+
+### Frontend Ports
+
+- **Next.js**: `3005`
+- **Grafana**: `3003`
+- **InfluxDB**: `8086`
+
+## 🎯 Usage
+
+### Dashboard
+
+Access the main dashboard at `http://localhost:3005`:
+
+- **Service Controls**: Start/stop InfluxDB writer and mock PLC agents
+- **Machine Selection**: Switch between bottle filler and CNC lathe machines
+- **Real-time Charts**: View production rates, spindle speed, vibration data
+- **Alarm Events**: Monitor real-time alarms with AI-powered analysis
+- **Tag Values**: View all PLC tag values in real-time
+
+### Work Orders
+
+- **Generate Work Orders**: Create maintenance work orders from alarm events
+- **Calendar View**: Google Calendar-style view with time slots
+- **List View**: Detailed list of all work orders
+- **AI Auto-Fill**: Automatically fill work order details from maintenance manuals
+
+### AI Chat
+
+- **Ask Questions**: Get answers about alarm procedures and maintenance
+- **Context-Aware**: Maintains conversation history
+- **RAG-Powered**: Retrieves information from embedded documentation
+
+### Workflows
+
+- **Visual Builder**: Drag-and-drop workflow creation
+- **Node-Based**: Create workflows with agent, monitor, and action nodes
+- **LangGraph Integration**: Execute complex workflows automatically
+
+## 🔐 Security Notes
+
+⚠️ **For Production Deployment:**
+
+1. **Change Default Passwords**: Update InfluxDB and Grafana default credentials
+2. **Enable MQTT Authentication**: Configure username/password in Mosquitto
+3. **Use TLS**: Enable TLS on MQTT port 8883
+4. **Secure API Keys**: Store Pinecone and OpenAI keys securely (use environment variables)
+5. **Network Isolation**: Deploy OT and IT networks separately
+
+## 🧪 Testing
+
+### Verify MQTT Connection
+
+```bash
+# Subscribe to MQTT topics
+mosquitto_sub -h localhost -t "plc/+/bottlefiller/data" -v
+```
+
+### Check InfluxDB Data
+
+```bash
+python3 check_influxdb_data.py
+```
+
+### Test API Endpoints
+
+```bash
+# Test latest data endpoint
+python3 test_api_latest.py machine-01
+
+# Test work orders API
+curl http://localhost:3005/api/work-orders
+```
+
+## 🐛 Troubleshooting
+
+### MQTT Connection Issues
+
+- **Check broker is running**: `docker ps | grep mqtt`
+- **Verify port**: Should be 1883 (dev) or 8883 (prod)
+- **Check network**: Ensure services are on the same Docker network
+
+### No Data in Frontend
+
+- **Click Refresh**: Use the refresh button on the dashboard
+- **Check InfluxDB writer**: Ensure it's running and connected
+- **Verify bucket name**: Should match configuration
+- **Check browser console**: Look for API errors
+
+### Frontend Not Loading
+
+- **Check Node.js version**: Requires Node.js 18+
+- **Reinstall dependencies**: `cd frontend && rm -rf node_modules && npm install`
+- **Check port 3005**: Ensure it's not in use
+
+## 📚 Additional Documentation
+
+- [Architecture Details](./ARCHITECTURE_DETAILED.md)
+- [Quick Start Guide](./QUICK_START.md)
+- [API Endpoints](./API_ENDPOINTS.md)
+- [Work Orders Documentation](./MAINTENANCE_WORK_ORDERS.md)
+- [Chat Setup](./CHAT_SETUP.md)
+- [Deployment Guides](./CLOUD_DEPLOYMENT.md)
+
+## 🤝 Contributing
+
+This project is actively maintained. For issues or questions, please check the documentation or open an issue on GitHub.
+
+## 📄 License
 
 This project is provided as-is for educational and development purposes.
 
-## Support
+## 🔗 Related Services
 
-For issues or questions, please check the broker logs and agent/viewer console output for error messages.
+- **InfluxDB UI**: `http://localhost:8086`
+- **Grafana**: `http://localhost:3003` (admin/admin)
+- **Frontend**: `http://localhost:3005`
 
+---
+
+**Last Updated**: 2025-01-28
