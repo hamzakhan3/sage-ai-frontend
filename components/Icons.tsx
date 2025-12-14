@@ -115,6 +115,12 @@ export const ChevronRightIcon = ({ className = "w-3 h-3", size }: IconProps) => 
   </svg>
 );
 
+export const ChevronLeftIcon = ({ className = "w-3 h-3", size }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+    <path d="M14 18l-6-6 6-6 1.41 1.41L10.83 12l4.58 4.59L14 18z" fill="currentColor"/>
+  </svg>
+);
+
 export const RefreshIcon = ({ className = "w-4 h-4", size }: IconProps) => (
   <svg viewBox="0 0 24 24" fill="none" className={className} width={size} height={size} xmlns="http://www.w3.org/2000/svg">
     <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" fill="currentColor"/>
@@ -202,6 +208,24 @@ export const WorkflowIcon = ({ className = "w-6 h-6", size }: IconProps) => (
     <path d="M9 16L13 16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
     <path d="M6 9L6 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
     <path d="M16 9L16 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+  </svg>
+);
+
+export const SaveIcon = ({ className = "w-4 h-4", size }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+    <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" fill="currentColor"/>
+  </svg>
+);
+
+export const ClearIcon = ({ className = "w-4 h-4", size }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+  </svg>
+);
+
+export const LoadIcon = ({ className = "w-4 h-4", size }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
   </svg>
 );
 

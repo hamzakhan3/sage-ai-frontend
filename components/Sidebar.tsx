@@ -24,7 +24,7 @@ export function Sidebar() {
       icon: <CalendarIcon className="w-6 h-6" />,
     },
     {
-      name: 'Alarm Events',
+      name: 'Events',
       href: '/alarm-events',
       icon: <AlarmEventsIcon className="w-6 h-6" />,
     },

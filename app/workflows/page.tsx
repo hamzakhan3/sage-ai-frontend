@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { WorkflowCanvas } from '@/components/WorkflowCanvas';
 import { NodePalette } from '@/components/NodePalette';
-import { PlayIcon, WorkflowIcon } from '@/components/Icons';
-import { EXAMPLE_WORKFLOW } from '@/lib/workflow-examples';
+import { PlayIcon, WorkflowIcon, SaveIcon, ClearIcon } from '@/components/Icons';
 import { ChatDock } from '@/components/ChatDock';
 import { toast } from 'react-toastify';
 
@@ -418,38 +417,7 @@ export default function WorkflowsPage() {
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-2 bg-dark-panel border border-dark-border rounded-lg p-1">
-              <button
-                onClick={() => {
-                  // Layout nodes in a horizontal flow
-                  const nodePositions = [
-                    { x: 100, y: 200 },
-                    { x: 300, y: 200 },
-                    { x: 500, y: 200 },
-                    { x: 700, y: 200 },
-                    { x: 900, y: 200 },
-                  ];
-                  const newNodes = EXAMPLE_WORKFLOW.nodes.map((n, idx) => ({
-                    ...n,
-                    type: 'tool-node',
-                    position: nodePositions[idx] || { x: 100 + idx * 200, y: 200 },
-                  }));
-                  const newEdges = EXAMPLE_WORKFLOW.edges;
-                  
-                  console.log('📋 [WORKFLOW] Loading example workflow');
-                  console.log('   Nodes:', newNodes.map(n => ({ id: n.id, type: n.data.type, label: n.data.label })));
-                  console.log('   Edges:', newEdges.map(e => ({ from: e.source, to: e.target })));
-                  console.log('   Total nodes:', newNodes.length);
-                  console.log('   Total edges:', newEdges.length);
-                  
-                  setNodes(newNodes);
-                  setEdges(newEdges);
-                  setExecutionLog([]);
-                }}
-                className="px-4 py-2 rounded text-sm font-medium bg-midnight-400 hover:bg-midnight-500 text-white transition-colors"
-              >
-                Load Example
-              </button>
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => {
                   console.log('🗑️  [WORKFLOW] Clearing workflow');
@@ -459,24 +427,35 @@ export default function WorkflowsPage() {
                   setEdges([]);
                   setExecutionLog([]);
                 }}
-                className="px-4 py-2 rounded text-sm font-medium bg-red-500 hover:bg-red-600 text-white transition-colors"
+                className="bg-midnight-300 hover:bg-midnight-400 text-dark-text border border-dark-border p-2 rounded transition-colors flex items-center justify-center"
+                title="Clear"
               >
-                Clear
+                <ClearIcon className="w-4 h-4" />
               </button>
               <button
-                onClick={handleSaveWorkflow}
-                disabled={isSaving || nodes.length === 0}
-                className="px-4 py-2 rounded text-sm font-medium bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white flex items-center gap-1.5 transition-colors"
+                onClick={async () => {
+                  // If there are nodes, save the workflow first
+                  if (nodes.length > 0 && !isSaving) {
+                    await handleSaveWorkflow();
+                  }
+                  // Then show saved workflows
+                  setSidebarView('workflows');
+                  setSelectedNode(null); // Deselect any selected node
+                  loadSavedWorkflows(); // Refresh the list
+                }}
+                disabled={isSaving}
+                className="bg-midnight-300 hover:bg-midnight-400 text-dark-text border border-dark-border p-2 rounded transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                title={isSaving ? 'Saving...' : 'View Saved Workflows'}
               >
-                {isSaving ? 'Saving...' : 'Save'}
+                <SaveIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={handleRunWorkflow}
                 disabled={isRunning || nodes.length === 0}
-                className="px-4 py-2 rounded text-sm font-medium bg-sage-500 hover:bg-sage-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white flex items-center gap-1.5 transition-colors"
+                className="bg-midnight-300 hover:bg-midnight-400 text-dark-text border border-dark-border p-2 rounded transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                title={isRunning ? 'Running...' : 'Run Workflow'}
               >
                 <PlayIcon className="w-4 h-4" />
-                {isRunning ? 'Running...' : 'Run'}
               </button>
             </div>
           </div>
@@ -525,7 +504,14 @@ export default function WorkflowsPage() {
                       }
                     }}
                     onEdgesChange={setEdges}
-                    onNodeClick={(node) => setSelectedNode(node)}
+                    onNodeClick={(node) => {
+                      console.log('🔵 [WORKFLOW] Node clicked:', node.id, node.data.type);
+                      setSelectedNode(node);
+                    }}
+                    onPaneClick={() => {
+                      console.log('🔵 [WORKFLOW] Canvas background clicked - deselecting node');
+                      setSelectedNode(null);
+                    }}
                   />
                 </div>
               </div>

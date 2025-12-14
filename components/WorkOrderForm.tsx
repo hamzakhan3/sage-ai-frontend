@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { CloseIcon, AIIcon, CheckIcon } from './Icons';
+import { CloseIcon, AIIcon, CheckIcon, TrashIcon } from './Icons';
 import { formatAlarmName } from '@/lib/utils';
 import { toast } from 'react-toastify';
 
@@ -922,48 +922,51 @@ export function WorkOrderForm({
               </div>
               <div className="space-y-3">
                 {parts.map((part, index) => (
-                  <div key={index} className="grid grid-cols-6 gap-2 items-end">
-                    <input
-                      type="text"
-                      placeholder="Part #"
-                      value={part.partNumber}
-                      onChange={(e) => updatePart(index, 'partNumber', e.target.value)}
-                      className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Description"
-                      value={part.description}
-                      onChange={(e) => updatePart(index, 'description', e.target.value)}
-                      className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Quantity"
-                      value={part.quantity}
-                      onChange={(e) => updatePart(index, 'quantity', e.target.value)}
-                      className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Qty in Stock"
-                      value={part.qtyInStock}
-                      onChange={(e) => updatePart(index, 'qtyInStock', e.target.value)}
-                      className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Location"
-                      value={part.location}
-                      onChange={(e) => updatePart(index, 'location', e.target.value)}
-                      className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
-                    />
+                  <div key={index} className="flex items-end gap-2">
+                    <div className="grid grid-cols-5 gap-2 flex-1">
+                      <input
+                        type="text"
+                        placeholder="Part #"
+                        value={part.partNumber}
+                        onChange={(e) => updatePart(index, 'partNumber', e.target.value)}
+                        className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Description"
+                        value={part.description}
+                        onChange={(e) => updatePart(index, 'description', e.target.value)}
+                        className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Quantity"
+                        value={part.quantity}
+                        onChange={(e) => updatePart(index, 'quantity', e.target.value)}
+                        className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Qty in Stock"
+                        value={part.qtyInStock}
+                        onChange={(e) => updatePart(index, 'qtyInStock', e.target.value)}
+                        className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Location"
+                        value={part.location}
+                        onChange={(e) => updatePart(index, 'location', e.target.value)}
+                        className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => removePart(index)}
-                      className="px-3 py-1 h-[34px] bg-red-500 hover:bg-red-600 text-white rounded text-sm font-medium transition-colors flex items-center justify-center"
+                      className="p-1.5 text-gray-400 hover:text-red-400 transition-colors flex items-center justify-center"
+                      title="Remove part"
                     >
-                      Remove
+                      <TrashIcon className="w-3 h-3" />
                     </button>
                   </div>
                 ))}
@@ -984,34 +987,37 @@ export function WorkOrderForm({
               </div>
               <div className="space-y-3">
                 {materials.map((material, index) => (
-                  <div key={index} className="grid grid-cols-4 gap-2 items-end">
-                    <input
-                      type="text"
-                      placeholder="Description"
-                      value={material.description}
-                      onChange={(e) => updateMaterial(index, 'description', e.target.value)}
-                      className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Quantity"
-                      value={material.quantity}
-                      onChange={(e) => updateMaterial(index, 'quantity', e.target.value)}
-                      className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Part #"
-                      value={material.partNumber}
-                      onChange={(e) => updateMaterial(index, 'partNumber', e.target.value)}
-                      className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
-                    />
+                  <div key={index} className="flex items-end gap-2">
+                    <div className="grid grid-cols-3 gap-2 flex-1">
+                      <input
+                        type="text"
+                        placeholder="Description"
+                        value={material.description}
+                        onChange={(e) => updateMaterial(index, 'description', e.target.value)}
+                        className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Quantity"
+                        value={material.quantity}
+                        onChange={(e) => updateMaterial(index, 'quantity', e.target.value)}
+                        className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Part #"
+                        value={material.partNumber}
+                        onChange={(e) => updateMaterial(index, 'partNumber', e.target.value)}
+                        className="bg-dark-bg border border-dark-border rounded px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-midnight-300"
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => removeMaterial(index)}
-                      className="px-3 py-1 h-[34px] bg-red-500 hover:bg-red-600 text-white rounded text-sm font-medium transition-colors flex items-center justify-center"
+                      className="p-1.5 text-gray-400 hover:text-red-400 transition-colors flex items-center justify-center"
+                      title="Remove material"
                     >
-                      Remove
+                      <TrashIcon className="w-3 h-3" />
                     </button>
                   </div>
                 ))}

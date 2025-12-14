@@ -238,7 +238,7 @@ export function AlarmEvents({ machineId = 'machine-01', machineType }: AlarmEven
             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => setIsExpanded(!isExpanded)}
           >
-            <span className="heading-inter heading-inter-sm">Alarm Events (Real-time)</span>
+            <span className="heading-inter heading-inter-sm">Events (Real-time)</span>
             {isExpanded ? <ChevronDownIcon className="w-3 h-3 text-gray-500" /> : <ChevronRightIcon className="w-3 h-3 text-gray-500" />}
             <span className={`text-xs ml-2 ${getConnectionStatusColor()}`}>
               {getConnectionStatusText()}
@@ -291,10 +291,10 @@ export function AlarmEvents({ machineId = 'machine-01', machineType }: AlarmEven
                     ? (
                       <span className="flex items-center gap-1.5 justify-center">
                         <CheckIcon className="w-4 h-4" />
-                        No alarm events for {machineId} -
+                        No events for {machineId} -
                       </span>
                     )
-                    : 'No alarm events yet'}
+                    : 'No events yet'}
                 </span>
                 <p className="text-gray-500 text-xs mt-2">
                   {connectionStatus === 'connected'

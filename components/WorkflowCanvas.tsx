@@ -23,6 +23,7 @@ interface WorkflowCanvasProps {
   onNodesChange: (nodes: Node[]) => void;
   onEdgesChange: (edges: Edge[]) => void;
   onNodeClick?: (node: Node) => void;
+  onPaneClick?: () => void;
 }
 
 // Custom node component with connection handles
@@ -102,6 +103,7 @@ export function WorkflowCanvas({
   onNodesChange,
   onEdgesChange,
   onNodeClick,
+  onPaneClick,
 }: WorkflowCanvasProps) {
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
@@ -297,6 +299,9 @@ export function WorkflowCanvas({
         onNodeClick={onNodeClick ? (event, node) => {
           event.stopPropagation();
           onNodeClick(node);
+        } : undefined}
+        onPaneClick={onPaneClick ? () => {
+          onPaneClick();
         } : undefined}
         nodeTypes={nodeTypes}
         fitView

@@ -113,7 +113,7 @@ export default function AlarmEventsPage() {
         <div className="flex items-center justify-start mb-4">
           <div className="flex items-center gap-3">
             <AlarmEventsIcon className="w-8 h-8 text-sage-400" />
-            <h1 className="heading-inter heading-inter-lg">Alarm Events</h1>
+            <h1 className="heading-inter heading-inter-lg">Events</h1>
           </div>
         </div>
 
@@ -163,7 +163,7 @@ export default function AlarmEventsPage() {
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-              <span className="ml-3 text-gray-400">Loading alarm events...</span>
+              <span className="ml-3 text-gray-400">Loading events...</span>
             </div>
           ) : error ? (
             <div className="p-8 bg-dark-panel border border-dark-border rounded text-center">
@@ -171,7 +171,7 @@ export default function AlarmEventsPage() {
             </div>
           ) : filteredAlerts.length === 0 ? (
             <div className="p-8 bg-dark-panel border border-dark-border rounded text-center">
-              <p className="text-gray-400">No alarm events found</p>
+              <p className="text-gray-400">No events found</p>
             </div>
           ) : (
             <div className="space-y-4">
