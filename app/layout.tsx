@@ -7,7 +7,7 @@ import { Sidebar } from '@/components/Sidebar';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'PLC Monitoring Dashboard',
+  title: 'Sage AI',
   description: 'Real-time monitoring dashboard for bottle filler PLC system',
 };
 

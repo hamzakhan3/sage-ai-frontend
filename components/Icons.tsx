@@ -258,3 +258,19 @@ export const PlusIcon = ({ className = "w-4 h-4", size }: IconProps) => (
   </svg>
 );
 
+export const LibraryIcon = ({ className = "w-6 h-6", size }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+    {/* Books/Documents stack */}
+    <path d="M4 6h16v12H4V6z" fill="currentColor" opacity="0.2"/>
+    <path d="M4 6h16v2H4V6z" fill="currentColor" opacity="0.4"/>
+    <path d="M6 8h12v10H6V8z" fill="currentColor" opacity="0.3"/>
+    <path d="M8 10h8v8H8v-8z" fill="currentColor" opacity="0.5"/>
+    {/* Document lines */}
+    <path d="M9 12h6v1H9v-1z" fill="currentColor" opacity="0.7"/>
+    <path d="M9 14h6v1H9v-1z" fill="currentColor" opacity="0.7"/>
+    <path d="M9 16h4v1H9v-1z" fill="currentColor" opacity="0.7"/>
+    {/* Book binding/spine */}
+    <path d="M4 6h2v12H4V6z" fill="currentColor" opacity="0.6"/>
+  </svg>
+);
+

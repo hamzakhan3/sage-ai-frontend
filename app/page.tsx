@@ -7,7 +7,7 @@ import { AlarmHistory } from '@/components/AlarmHistory';
 import { AlarmEvents } from '@/components/AlarmEvents';
 import { DowntimeStats } from '@/components/DowntimeStats';
 import { WorkOrderForm } from '@/components/WorkOrderForm';
-import { RefreshIcon } from '@/components/Icons';
+import { RefreshIcon, ChartIcon } from '@/components/Icons';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { VibrationChart } from '@/components/VibrationChart';
@@ -50,6 +50,12 @@ export default function Dashboard() {
       
       {/* Header */}
       <div className="mb-6">
+        {/* Analytics Heading */}
+        <div className="flex items-center gap-3 mb-4">
+          <ChartIcon className="w-8 h-8 text-sage-400" />
+          <h1 className="heading-inter heading-inter-lg">AI-Powered Analytics</h1>
+        </div>
+        
         {/* Machine Type and Selection */}
         <div className="flex items-center justify-between gap-4 mt-4">
           <div className="flex items-center gap-4">

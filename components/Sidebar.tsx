@@ -24,7 +24,7 @@ export function Sidebar() {
       icon: <CalendarIcon className="w-6 h-6" />,
     },
     {
-      name: 'Shopfloors',
+      name: 'Equipments',
       href: '/shopfloors',
       icon: <ShopfloorsIcon className="w-6 h-6" />,
     },
