@@ -28,7 +28,7 @@ interface DowntimeStats {
   periods: DowntimePeriod[];
   comparison?: {
     previousDowntimePercentage: number;
-    change: number; // positive = increase, negative = decrease
+    change: number;
     trend: 'increasing' | 'decreasing' | 'same';
   };
 }
@@ -94,10 +94,9 @@ export async function GET(request: NextRequest) {
         |> limit(n: 1)
     `;
 
-    let latestTime: Date | null = null;
     const latestResults: any[] = [];
 
-    // Find latest data point
+    // Find latest data point - explicitly type the result
     await new Promise<void>((resolve) => {
       queryApi.queryRows(findLatestQuery, {
         next(row, tableMeta) {
@@ -109,16 +108,19 @@ export async function GET(request: NextRequest) {
           resolve();
         },
         complete() {
-          if (latestResults.length > 0) {
-            latestTime = new Date(latestResults[0]._time as string);
-            console.log(`[Downtime API] Latest data point found: ${latestTime.toISOString()}`);
-          } else {
-            console.log(`[Downtime API] No latest data point found`);
-          }
           resolve();
         },
       });
     });
+
+    // Extract latestTime after the Promise completes
+    let latestTime: Date | null = null;
+    if (latestResults.length > 0) {
+      latestTime = new Date(latestResults[0]._time as string);
+      console.log(`[Downtime API] Latest data point found: ${latestTime.toISOString()}`);
+    } else {
+      console.log(`[Downtime API] No latest data point found`);
+    }
 
     // Match vibration API logic: use latestTime for end time and extend start time if needed
     // This ensures downtime calculates for the same period that vibration chart shows
@@ -173,7 +175,6 @@ export async function GET(request: NextRequest) {
     console.log(`[Downtime API] Adjusted total seconds: ${actualTotalTimeSeconds.toFixed(0)} (${(actualTotalTimeSeconds/3600).toFixed(2)} hours)`);
 
     // Query vibration data - get all timestamps where data exists
-    // Query each field separately and combine timestamps
     const fluxQuery = `
       from(bucket: "${VIBRATION_BUCKET}")
         |> range(start: ${actualStartTimeStr}, stop: ${actualEndTimeStr})
@@ -238,7 +239,6 @@ export async function GET(request: NextRequest) {
     // Extract unique timestamps from results
     const timestampSet = new Set<number>();
     results.forEach(r => {
-      // Try different possible field names for timestamp
       const timeStr = r._time || r._value || (r as any).time;
       if (timeStr) {
         try {
@@ -255,7 +255,6 @@ export async function GET(request: NextRequest) {
     const dataPoints = Array.from(timestampSet).sort((a, b) => a - b);
     
     console.log(`[Downtime API] Extracted ${dataPoints.length} unique timestamps from ${results.length} results`);
-
     console.log(`[Downtime API] Processing ${dataPoints.length} data points`);
     console.log(`[Downtime API] First data point: ${new Date(dataPoints[0]).toISOString()}`);
     console.log(`[Downtime API] Last data point: ${new Date(dataPoints[dataPoints.length - 1]).toISOString()}`);
@@ -320,7 +319,6 @@ export async function GET(request: NextRequest) {
     console.log(`[Downtime API] Total downtime: ${totalDowntime.toFixed(0)}s out of ${actualTotalTimeSeconds.toFixed(0)}s`);
 
     // Calculate uptime: time periods where data exists
-    // Uptime = total time - downtime
     const totalUptime = actualTotalTimeSeconds - totalDowntime;
     const downtimePercentage = actualTotalTimeSeconds > 0 ? (totalDowntime / actualTotalTimeSeconds) * 100 : 0;
     const uptimePercentage = actualTotalTimeSeconds > 0 ? (totalUptime / actualTotalTimeSeconds) * 100 : 100;
@@ -337,7 +335,7 @@ export async function GET(request: NextRequest) {
     let comparison: DowntimeStats['comparison'] | undefined;
     
     // Calculate previous period time range
-    const previousEndTime = actualStartTime; // End of previous period = start of current period
+    const previousEndTime = actualStartTime;
     const previousStartTime = new Date(previousEndTime.getTime() - actualTotalTimeSeconds * 1000);
     const previousStartTimeStr = previousStartTime.toISOString();
     const previousEndTimeStr = previousEndTime.toISOString();
@@ -377,10 +375,6 @@ export async function GET(request: NextRequest) {
           console.log(`[Downtime API] Found ${previousResults.length} data points in previous period for machineId: ${machineId}`);
           if (previousResults.length === 0) {
             console.log(`[Downtime API] ⚠️  No data found in previous period - comparison will not be available`);
-            console.log(`[Downtime API] This could mean:`);
-            console.log(`  1. Machine had no data in previous period`);
-            console.log(`  2. MachineId format mismatch: "${machineId}"`);
-            console.log(`  3. Data exists but query isn't matching`);
           }
           resolve();
         },
@@ -391,7 +385,6 @@ export async function GET(request: NextRequest) {
     let previousDowntimePercentage: number = 0;
     
     if (previousResults.length > 0) {
-      // Extract timestamps from previous period
       const previousTimestampSet = new Set<number>();
       previousResults.forEach(r => {
         const timeStr = r._time || r._value || (r as any).time;
@@ -409,7 +402,6 @@ export async function GET(request: NextRequest) {
       
       const previousDataPoints = Array.from(previousTimestampSet).sort((a, b) => a - b);
       
-      // Calculate downtime for previous period
       let previousTotalDowntime = 0;
       const previousStartTimeMs = previousStartTime.getTime();
       const previousEndTimeMs = previousEndTime.getTime();
@@ -443,14 +435,10 @@ export async function GET(request: NextRequest) {
         ? (previousTotalDowntime / actualTotalTimeSeconds) * 100 
         : 0;
     } else {
-      // No data in previous period = 100% downtime
       previousDowntimePercentage = 100;
       console.log(`[Downtime API] ⚠️  No data found in previous period - assuming 100% downtime`);
-      console.log(`[Downtime API] MachineId used: ${machineId}`);
-      console.log(`[Downtime API] Previous period: ${previousStartTimeStr} to ${previousEndTimeStr}`);
     }
     
-    // Always calculate comparison (even if previous period had no data)
     const change = downtimePercentage - previousDowntimePercentage;
     const trend = Math.abs(change) < 0.1 ? 'same' : (change > 0 ? 'increasing' : 'decreasing');
     
@@ -472,7 +460,7 @@ export async function GET(request: NextRequest) {
       totalDowntime,
       totalUptime,
       incidentCount: periods.length,
-      periods: periods.slice(0, 10), // Limit to last 10 periods
+      periods: periods.slice(0, 10),
       comparison,
     };
 
@@ -480,7 +468,6 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('[Downtime API] Error:', error);
     console.error('[Downtime API] Error stack:', error.stack);
-    console.error('[Downtime API] Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
     return NextResponse.json(
       { 
         error: error.message || 'Failed to calculate downtime',

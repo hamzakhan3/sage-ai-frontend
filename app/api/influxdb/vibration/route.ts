@@ -17,9 +17,9 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const machineId = searchParams.get('machineId') || '';
-    const timeRange = searchParams.get('timeRange') || '-7d'; // Default to 7 days to catch older data
+    const timeRange = searchParams.get('timeRange') || '-7d';
     const windowPeriod = searchParams.get('windowPeriod') || '5m';
-    const axis = searchParams.get('axis') || 'vibration'; // 'vibration', 'x_vibration', 'y_vibration', 'x_acc', 'y_acc', 'z_acc'
+    const axis = searchParams.get('axis') || 'vibration';
 
     if (!machineId) {
       return NextResponse.json(
@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
         |> limit(n: 1)
     `;
 
-    let latestTime: Date | null = null;
     const latestResults: any[] = [];
 
     // Find latest data point
@@ -54,13 +53,16 @@ export async function GET(request: NextRequest) {
           resolve();
         },
         complete() {
-          if (latestResults.length > 0) {
-            latestTime = new Date(latestResults[0]._time as string);
-          }
           resolve();
         },
       });
     });
+
+    // Extract latestTime after the Promise completes
+    let latestTime: Date | null = null;
+    if (latestResults.length > 0) {
+      latestTime = new Date(latestResults[0]._time as string);
+    }
 
     // Parse timeRange (e.g., "-24h", "-7d", "-1m")
     let startTime: Date = new Date();
@@ -83,7 +85,7 @@ export async function GET(request: NextRequest) {
           startTime.setSeconds(startTime.getSeconds() - value);
           break;
         default:
-          startTime.setDate(startTime.getDate() - 7); // Default to 7 days
+          startTime.setDate(startTime.getDate() - 7);
       }
     }
 
@@ -93,7 +95,7 @@ export async function GET(request: NextRequest) {
       if (timeDiff > 0) {
         // Latest data is older than requested range, extend to include it
         console.log(`[Vibration API] Latest data is ${Math.round(timeDiff / (1000 * 60 * 60))} hours older than requested range. Extending range.`);
-        startTime = new Date(latestTime.getTime() - (24 * 60 * 60 * 1000)); // Go back 1 day from latest data
+        startTime = new Date(latestTime.getTime() - (24 * 60 * 60 * 1000));
       }
     }
     
@@ -163,4 +165,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
