@@ -55,6 +55,7 @@ export default function WorkOrdersPage() {
   const [filters, setFilters] = useState({
     status: '',
     priority: '',
+    machineId: '',
   });
 
   useEffect(() => {
