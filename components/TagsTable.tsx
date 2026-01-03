@@ -315,7 +315,7 @@ export function TagsTable({ machineId = 'machine-01', machineType, macAddress, m
                         ? formatValue(field.value, field.type, field.unit)
                         : 'N/A'}
                     </div>
-                    {field.time && (
+                    {'time' in field && field.time && (
                       <div className="text-xs text-gray-500 mt-1">
                         {new Date(field.time).toLocaleString('en-US', {
                           month: 'short',
