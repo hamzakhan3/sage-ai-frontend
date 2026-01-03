@@ -11,13 +11,13 @@ async function parsePDF(filePath: string): Promise<string> {
     const buffer = await readFile(filePath);
     
     // Try to use pdf-parse if available
-    let pdfParse;
+    let pdfParse: any;
     try {
       pdfParse = require('pdf-parse');
     } catch {
       // If pdf-parse is not installed, try dynamic import
       try {
-        const pdfModule = await import('pdf-parse');
+        const pdfModule: any = await import('pdf-parse');
         pdfParse = pdfModule.default || pdfModule;
       } catch {
         throw new Error('PDF parsing requires pdf-parse package. Please install it: npm install pdf-parse');
