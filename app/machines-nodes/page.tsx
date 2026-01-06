@@ -224,8 +224,11 @@ export default function MachinesNodesPage() {
                   <tr key={machine.machineId} className="hover:bg-dark-bg/50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-white">{machine.machineName}</div>
-                      {machine.description && (
-                        <div className="text-xs text-gray-500 mt-1">{machine.description}</div>
+                      {machine.description && machine.description.trim() && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {machine.description.split(' ').slice(0, 5).join(' ')}
+                          {machine.description.split(' ').length > 5 ? '...' : ''}
+                        </div>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
