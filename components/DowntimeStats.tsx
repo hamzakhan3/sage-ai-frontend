@@ -69,11 +69,23 @@ export function DowntimeStats({ machineId, timeRange = '-24h', machineType }: Do
   if (isLoading) {
     return (
       <div className="bg-dark-panel border border-dark-border rounded-lg p-6">
-        <h2 className="heading-inter heading-inter-sm text-white mb-4 flex items-center gap-2">
-          <ClockIcon className="w-5 h-5 text-sage-400" />
-          Performance
-        </h2>
-        <div className="text-gray-400">Loading downtime data...</div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="heading-inter heading-inter-sm text-white flex items-center gap-2">
+            <ClockIcon className="w-5 h-5 text-sage-400" />
+            Performance
+          </h2>
+          <div className="h-3 bg-dark-border rounded w-24 animate-pulse"></div>
+        </div>
+        {/* Loading skeleton */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-dark-bg border border-dark-border rounded p-4">
+              <div className="h-4 bg-dark-border rounded w-20 mb-3 animate-pulse"></div>
+              <div className="h-10 bg-dark-border rounded w-24 mb-2 animate-pulse"></div>
+              <div className="h-3 bg-dark-border rounded w-32 animate-pulse"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
