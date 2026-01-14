@@ -274,3 +274,38 @@ export const LibraryIcon = ({ className = "w-6 h-6", size }: IconProps) => (
   </svg>
 );
 
+export const SignOutIcon = ({ className = "w-6 h-6", size }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" fill="currentColor"/>
+  </svg>
+);
+
+export const ArrowUpIcon = ({ className = "w-5 h-5", size }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+    <path d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z" fill="currentColor"/>
+  </svg>
+);
+
+export const ArrowDownIcon = ({ className = "w-5 h-5", size }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+    <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z" fill="currentColor"/>
+  </svg>
+);
+
+export const ArrowRightIcon = ({ className = "w-5 h-5", size }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z" fill="currentColor"/>
+  </svg>
+);
+
+export const SignalIcon = ({ className = "w-6 h-6", size }: IconProps) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+    {/* Center circle - larger and more prominent */}
+    <circle cx="12" cy="12" r="3.5" fill="currentColor"/>
+    {/* Inner curved arc - expanding signal wave - thicker */}
+    <path d="M5 12a7 7 0 0 1 7-7" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round"/>
+    {/* Outer curved arc - larger expanding signal wave - thicker */}
+    <path d="M1 12a11 11 0 0 1 11-11" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round"/>
+  </svg>
+);
+

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { ClockIcon, TrendingUpIcon } from './Icons';
+import { ClockIcon, TrendingUpIcon, ArrowUpIcon, ArrowDownIcon, ArrowRightIcon } from './Icons';
 
 interface DowntimeStatsProps {
   machineId: string;
@@ -16,13 +16,17 @@ interface DowntimePeriod {
 }
 
 interface DowntimeStats {
-  totalDowntime: number;
-  totalDowntimeFormatted: string;
-  incidentCount: number;
-  averageDowntime: number;
-  averageDowntimeFormatted: string;
-  periods: DowntimePeriod[];
+  downtimePercentage: number;
   uptimePercentage: number;
+  totalDowntime: number;
+  totalUptime: number;
+  incidentCount: number;
+  periods: DowntimePeriod[];
+  comparison?: {
+    previousDowntimePercentage: number;
+    change: number;
+    trend: 'increasing' | 'decreasing' | 'same';
+  };
 }
 
 async function fetchDowntimeStats(
@@ -40,13 +44,12 @@ async function fetchDowntimeStats(
     if (response.status === 404) {
       // No data - return empty stats
       return {
-        totalDowntime: 0,
-        totalDowntimeFormatted: '0s',
-        incidentCount: 0,
-        averageDowntime: 0,
-        averageDowntimeFormatted: '0s',
-        periods: [],
+        downtimePercentage: 0,
         uptimePercentage: 100,
+        totalDowntime: 0,
+        totalUptime: 0,
+        incidentCount: 0,
+        periods: [],
       };
     }
     throw new Error('Failed to fetch downtime stats');
@@ -67,8 +70,8 @@ export function DowntimeStats({ machineId, timeRange = '-24h', machineType }: Do
     return (
       <div className="bg-dark-panel border border-dark-border rounded-lg p-6">
         <h2 className="heading-inter heading-inter-sm text-white mb-4 flex items-center gap-2">
-          <ClockIcon className="w-5 h-5" />
-          Downtime Statistics
+          <ClockIcon className="w-5 h-5 text-sage-400" />
+          Performance
         </h2>
         <div className="text-gray-400">Loading downtime data...</div>
       </div>
@@ -79,8 +82,8 @@ export function DowntimeStats({ machineId, timeRange = '-24h', machineType }: Do
     return (
       <div className="bg-dark-panel border border-dark-border rounded-lg p-6">
         <h2 className="heading-inter heading-inter-sm text-white mb-4 flex items-center gap-2">
-          <ClockIcon className="w-5 h-5" />
-          Downtime Statistics
+          <ClockIcon className="w-5 h-5 text-sage-400" />
+          Performance
         </h2>
         <div className="text-red-400">Error loading downtime data</div>
       </div>
@@ -88,13 +91,12 @@ export function DowntimeStats({ machineId, timeRange = '-24h', machineType }: Do
   }
 
   const stats = data || {
-    totalDowntime: 0,
-    totalDowntimeFormatted: '0s',
-    incidentCount: 0,
-    averageDowntime: 0,
-    averageDowntimeFormatted: '0s',
-    periods: [],
+    downtimePercentage: 0,
     uptimePercentage: 100,
+    totalDowntime: 0,
+    totalUptime: 0,
+    incidentCount: 0,
+    periods: [],
   };
 
   // Format time range for display
@@ -123,48 +125,62 @@ export function DowntimeStats({ machineId, timeRange = '-24h', machineType }: Do
     <div className="bg-dark-panel border border-dark-border rounded-lg p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="heading-inter heading-inter-sm text-white flex items-center gap-2">
-          <ClockIcon className="w-5 h-5" />
-          Downtime Statistics
+          <ClockIcon className="w-5 h-5 text-sage-400" />
+          Performance
         </h2>
         <span className="text-xs text-gray-500">{timeRangeLabel}</span>
       </div>
 
       {/* Key Metrics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        {/* Total Downtime */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+        {/* Downtime Percentage */}
         <div className="bg-dark-bg border border-dark-border rounded p-4">
-          <div className="text-gray-400 text-sm mb-1">Total Downtime</div>
-          <div className="text-2xl font-bold text-white">{stats.totalDowntimeFormatted}</div>
+          <div className="text-gray-400 text-sm mb-1">Downtime</div>
+          <div className="flex items-center gap-2">
+            <div className="text-3xl font-bold text-red-400">{stats.downtimePercentage.toFixed(1)}%</div>
+            {stats.comparison && (
+              <div className={`flex items-center gap-1 px-2 py-1 rounded ${
+                stats.comparison.trend === 'increasing' 
+                  ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                  : stats.comparison.trend === 'decreasing'
+                  ? 'bg-sage-500/20 text-sage-400 border border-sage-500/30'
+                  : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+              }`}>
+                {stats.comparison.trend === 'increasing' && <ArrowUpIcon className="w-4 h-4" />}
+                {stats.comparison.trend === 'decreasing' && <ArrowDownIcon className="w-4 h-4" />}
+                {stats.comparison.trend === 'same' && <ArrowRightIcon className="w-4 h-4" />}
+                <span className="text-xs font-medium">
+                  {stats.comparison.change.toFixed(1)}%
+                </span>
+              </div>
+            )}
+          </div>
           <div className="text-xs text-gray-500 mt-1">
-            {stats.totalDowntime > 0 ? `${(100 - stats.uptimePercentage).toFixed(1)}% of period` : 'No downtime'}
+            {stats.incidentCount > 0 ? `${stats.incidentCount} incident${stats.incidentCount === 1 ? '' : 's'}` : 'No downtime'}
           </div>
-        </div>
-
-        {/* Incident Count */}
-        <div className="bg-dark-bg border border-dark-border rounded p-4">
-          <div className="text-gray-400 text-sm mb-1">Incidents</div>
-          <div className="text-2xl font-bold text-white">{stats.incidentCount}</div>
-          <div className="text-xs text-gray-500 mt-1">
-            {stats.incidentCount === 1 ? 'incident' : 'incidents'}
-          </div>
-        </div>
-
-        {/* Average Downtime */}
-        <div className="bg-dark-bg border border-dark-border rounded p-4">
-          <div className="text-gray-400 text-sm mb-1">Avg Duration</div>
-          <div className="text-2xl font-bold text-white">
-            {stats.incidentCount > 0 ? stats.averageDowntimeFormatted : '0s'}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">per incident</div>
+          {stats.comparison && (
+            <div className="text-xs text-gray-600 mt-1">
+              Previous: {stats.comparison.previousDowntimePercentage.toFixed(1)}%
+            </div>
+          )}
         </div>
 
         {/* Uptime Percentage */}
         <div className="bg-dark-bg border border-dark-border rounded p-4">
           <div className="text-gray-400 text-sm mb-1">Uptime</div>
-          <div className="text-2xl font-bold text-white">{stats.uptimePercentage.toFixed(1)}%</div>
+          <div className="text-3xl font-bold text-sage-400">{stats.uptimePercentage.toFixed(1)}%</div>
           <div className="text-xs text-gray-500 mt-1">
             <TrendingUpIcon className="w-3 h-3 inline mr-1" />
             Availability
+          </div>
+        </div>
+
+        {/* Incident Count */}
+        <div className="bg-dark-bg border border-dark-border rounded p-4">
+          <div className="text-gray-400 text-sm mb-1">Downtime Incidents</div>
+          <div className="text-3xl font-bold text-white">{stats.incidentCount}</div>
+          <div className="text-xs text-gray-500 mt-1">
+            {stats.incidentCount === 1 ? 'incident' : 'incidents'}
           </div>
         </div>
       </div>
@@ -179,4 +195,5 @@ export function DowntimeStats({ machineId, timeRange = '-24h', machineType }: Do
     </div>
   );
 }
+
 
