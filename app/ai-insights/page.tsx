@@ -1272,8 +1272,8 @@ export default function AIInsightsPage() {
               }}
             />
       </div>
-              </div>
-            </div>
+        </div>
+      </div>
 
       {/* Shift Tabs - Right Side, Above Performance */}
       {selectedLabId && labShifts.length > 0 && (
@@ -1428,51 +1428,51 @@ export default function AIInsightsPage() {
             </div>
           ) : maintenanceStats ? (
             // Key Metrics Grid
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {/* Downtime Percentage */}
-              <div className="bg-dark-bg border border-dark-border rounded p-4">
-                <div className="text-gray-400 text-sm mb-1">Downtime</div>
-                <div className="text-3xl font-bold text-red-400">
-                  {maintenanceStats.downtimePercentage.toFixed(1)}%
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {formatDuration(maintenanceStats.totalDowntime)}
-                </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {/* Downtime Percentage */}
+            <div className="bg-dark-bg border border-dark-border rounded p-4">
+              <div className="text-gray-400 text-sm mb-1">Downtime</div>
+              <div className="text-3xl font-bold text-red-400">
+                {maintenanceStats.downtimePercentage.toFixed(1)}%
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {formatDuration(maintenanceStats.totalDowntime)}
+              </div>
                 <ComparisonBadge 
                   current={maintenanceStats.downtimePercentage} 
                   previous={previousMonthStats?.downtimePercentage ?? null}
                   isPercentage={true}
                   lowerIsBetter={true}
                 />
-              </div>
+            </div>
 
-              {/* Uptime Percentage */}
-              <div className="bg-dark-bg border border-dark-border rounded p-4">
-                <div className="text-gray-400 text-sm mb-1">Uptime</div>
-                <div className="text-3xl font-bold text-sage-400">
-                  {maintenanceStats.uptimePercentage.toFixed(1)}%
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  <TrendingUpIcon className="w-3 h-3 inline mr-1" />
-                  Availability
-                </div>
+            {/* Uptime Percentage */}
+            <div className="bg-dark-bg border border-dark-border rounded p-4">
+              <div className="text-gray-400 text-sm mb-1">Uptime</div>
+              <div className="text-3xl font-bold text-sage-400">
+                {maintenanceStats.uptimePercentage.toFixed(1)}%
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                <TrendingUpIcon className="w-3 h-3 inline mr-1" />
+                Availability
+              </div>
                 <ComparisonBadge 
                   current={maintenanceStats.uptimePercentage} 
                   previous={previousMonthStats?.uptimePercentage ?? null}
                   isPercentage={true}
                   lowerIsBetter={false}
                 />
-              </div>
+            </div>
 
-              {/* Total Machines */}
-              <div className="bg-dark-bg border border-dark-border rounded p-4">
-                <div className="text-gray-400 text-sm mb-1">Total Machines</div>
-                <div className="text-3xl font-bold text-white">
-                  {maintenanceStats.totalMachines}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Active machines in {selectedLab?.name || 'selected lab'}
-                </div>
+            {/* Total Machines */}
+            <div className="bg-dark-bg border border-dark-border rounded p-4">
+              <div className="text-gray-400 text-sm mb-1">Total Machines</div>
+              <div className="text-3xl font-bold text-white">
+                {maintenanceStats.totalMachines}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Active machines in {selectedLab?.name || 'selected lab'}
+              </div>
                 <ComparisonBadge 
                   current={maintenanceStats.totalMachines} 
                   previous={previousMonthStats?.totalMachines ?? null}
@@ -1682,53 +1682,52 @@ export default function AIInsightsPage() {
               ))}
             </div>
           ) : maintenanceStats ? (
-            // Key Metrics Grid
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {/* Scheduled Maintenance */}
-              <div className="bg-dark-bg border border-dark-border rounded p-4">
-                <div className="text-gray-400 text-sm mb-1">Scheduled Maintenance</div>
-                <div className="text-3xl font-bold text-white">
-                  {maintenanceStats.scheduledMaintenanceCount}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Work orders
-                </div>
+            {/* Scheduled Maintenance */}
+            <div className="bg-dark-bg border border-dark-border rounded p-4">
+              <div className="text-gray-400 text-sm mb-1">Scheduled Maintenance</div>
+              <div className="text-3xl font-bold text-white">
+                {maintenanceStats.scheduledMaintenanceCount}
               </div>
-
-              {/* Alerts */}
-              <div className="bg-dark-bg border border-dark-border rounded p-4">
-                <div className="text-gray-400 text-sm mb-1">Alerts</div>
-                <div className="text-3xl font-bold text-yellow-400">
-                  {alertsCount}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  Alert events
-                </div>
-                <ComparisonBadge 
-                  current={alertsCount} 
-                  previous={previousAlertsCount}
-                  format={(val) => val.toFixed(0)}
-                  isPercentage={false}
-                  lowerIsBetter={true}
-                />
+              <div className="text-xs text-gray-500 mt-1">
+                Work orders
               </div>
+            </div>
 
-              {/* Downtime Incidents */}
-              <div className="bg-dark-bg border border-dark-border rounded p-4">
-                <div className="text-gray-400 text-sm mb-1">Downtime Incidents</div>
-                <div className="text-3xl font-bold text-red-400">
-                  {downtimeIncidentsCount}
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {downtimeIncidentsCount === 1 ? 'incident' : 'incidents'}
-                </div>
-                <ComparisonBadge 
-                  current={downtimeIncidentsCount} 
-                  previous={previousDowntimeIncidentsCount}
-                  format={(val) => val.toFixed(0)}
-                  isPercentage={false}
-                  lowerIsBetter={true}
-                />
+            {/* Alerts */}
+            <div className="bg-dark-bg border border-dark-border rounded p-4">
+              <div className="text-gray-400 text-sm mb-1">Alerts</div>
+                  <div className="text-3xl font-bold text-yellow-400">
+                    {alertsCount}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Alert events
+                  </div>
+                  <ComparisonBadge 
+                    current={alertsCount} 
+                    previous={previousAlertsCount}
+                    format={(val) => val.toFixed(0)}
+                    isPercentage={false}
+                    lowerIsBetter={true}
+                  />
+            </div>
+
+            {/* Downtime Incidents */}
+            <div className="bg-dark-bg border border-dark-border rounded p-4">
+              <div className="text-gray-400 text-sm mb-1">Downtime Incidents</div>
+                  <div className="text-3xl font-bold text-red-400">
+                    {downtimeIncidentsCount}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {downtimeIncidentsCount === 1 ? 'incident' : 'incidents'}
+                  </div>
+                  <ComparisonBadge 
+                    current={downtimeIncidentsCount} 
+                    previous={previousDowntimeIncidentsCount}
+                    format={(val) => val.toFixed(0)}
+                    isPercentage={false}
+                    lowerIsBetter={true}
+                  />
               </div>
             </div>
           ) : null}
