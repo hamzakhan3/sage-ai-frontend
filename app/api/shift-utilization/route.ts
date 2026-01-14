@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
         data: {
           shiftName,
           totalMachines: 0,
+          machinesWithData: 0,
           averageUtilization: 0,
           totalProductiveHours: 0,
           totalIdleHours: 0,

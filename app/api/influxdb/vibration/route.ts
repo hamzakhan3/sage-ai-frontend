@@ -64,62 +64,82 @@ export async function GET(request: NextRequest) {
       latestTime = new Date(latestResults[0]._time as string);
     }
 
-    // Parse timeRange (e.g., "-24h", "-7d", "-1m")
-    let startTime: Date = new Date();
+    // If windowPeriod is 'raw', we want to show data around the latest point
+    // Show requested time range ending at the latest data point (or now if no data found)
+    let startTime: Date;
+    let stopTime: Date;
+    
+    // Parse the time range to get minutes or hours
+    let milliseconds = 5 * 60 * 1000; // default 5 minutes
     if (timeRange.startsWith('-')) {
       const timeRangeStr = timeRange.slice(1);
       const unit = timeRangeStr.slice(-1);
       const value = parseInt(timeRangeStr.slice(0, -1));
       
-      switch (unit) {
-        case 'h':
-          startTime.setHours(startTime.getHours() - value);
-          break;
-        case 'd':
-          startTime.setDate(startTime.getDate() - value);
-          break;
-        case 'm':
-          startTime.setMinutes(startTime.getMinutes() - value);
-          break;
-        case 's':
-          startTime.setSeconds(startTime.getSeconds() - value);
-          break;
-        default:
-          startTime.setDate(startTime.getDate() - 7);
+      if (unit === 'm') {
+        milliseconds = value * 60 * 1000; // Convert minutes to milliseconds
+      } else if (unit === 'h') {
+        milliseconds = value * 60 * 60 * 1000; // Convert hours to milliseconds
       }
     }
-
-    // If we found latest data and it's older than our time range, extend the range
-    if (latestTime) {
-      const timeDiff = startTime.getTime() - latestTime.getTime();
-      if (timeDiff > 0) {
-        // Latest data is older than requested range, extend to include it
-        console.log(`[Vibration API] Latest data is ${Math.round(timeDiff / (1000 * 60 * 60))} hours older than requested range. Extending range.`);
-        startTime = new Date(latestTime.getTime() - (24 * 60 * 60 * 1000));
+    
+    if (windowPeriod === 'raw') {
+      // For raw data, show requested time range ending at the latest data point
+      if (latestTime) {
+        stopTime = latestTime;
+        startTime = new Date(latestTime.getTime() - milliseconds);
+      } else {
+        // No data found, use current time
+        stopTime = new Date();
+        startTime = new Date(stopTime.getTime() - milliseconds);
+      }
+    } else {
+      // For aggregated data, show requested time range ending at the latest data point
+      if (latestTime) {
+        stopTime = latestTime;
+        startTime = new Date(latestTime.getTime() - milliseconds);
+      } else {
+        // No data found, use current time
+        stopTime = new Date();
+        startTime = new Date(stopTime.getTime() - milliseconds);
       }
     }
     
     const startTimeStr = startTime.toISOString();
-    const stopTime = latestTime ? latestTime.toISOString() : new Date().toISOString();
+    const stopTimeStr = stopTime.toISOString();
     
     console.log(`[Vibration API] Querying for machineId: ${machineId}`);
     console.log(`[Vibration API] Axis: ${axis}`);
-    console.log(`[Vibration API] Time range: ${startTimeStr} to ${stopTime}`);
+    console.log(`[Vibration API] Time range: ${startTimeStr} to ${stopTimeStr}`);
     if (latestTime) {
       console.log(`[Vibration API] Latest data found: ${latestTime.toISOString()}`);
     }
     
     // Query the wisermachines-test bucket with Vibration measurement
-    const fluxQuery = `
-      from(bucket: "${VIBRATION_BUCKET}")
-        |> range(start: ${startTimeStr}, stop: ${stopTime})
-        |> filter(fn: (r) => r["_measurement"] == "Vibration")
-        |> filter(fn: (r) => exists r.machineId and r.machineId == "${machineId}")
-        |> filter(fn: (r) => r["_field"] == "${axis}")
-        |> aggregateWindow(every: ${windowPeriod}, fn: mean, createEmpty: false)
-        |> sort(columns: ["_time"])
-        |> limit(n: 10000)
-    `;
+    // If windowPeriod is 'raw', don't aggregate - show raw data exactly as it is
+    let fluxQuery = '';
+    if (windowPeriod === 'raw') {
+      fluxQuery = `
+        from(bucket: "${VIBRATION_BUCKET}")
+          |> range(start: ${startTimeStr}, stop: ${stopTimeStr})
+          |> filter(fn: (r) => r["_measurement"] == "Vibration")
+          |> filter(fn: (r) => exists r.machineId and r.machineId == "${machineId}")
+          |> filter(fn: (r) => r["_field"] == "${axis}")
+          |> sort(columns: ["_time"])
+          |> limit(n: 10000)
+      `;
+    } else {
+      fluxQuery = `
+        from(bucket: "${VIBRATION_BUCKET}")
+          |> range(start: ${startTimeStr}, stop: ${stopTimeStr})
+          |> filter(fn: (r) => r["_measurement"] == "Vibration")
+          |> filter(fn: (r) => exists r.machineId and r.machineId == "${machineId}")
+          |> filter(fn: (r) => r["_field"] == "${axis}")
+          |> aggregateWindow(every: ${windowPeriod}, fn: mean, createEmpty: false)
+          |> sort(columns: ["_time"])
+          |> limit(n: 10000)
+      `;
+    }
 
     console.log(`[Vibration API] Flux query: ${fluxQuery.substring(0, 200)}...`);
 
@@ -152,7 +172,7 @@ export async function GET(request: NextRequest) {
             data, 
             axis,
             latestDataTime: latestTime ? latestTime.toISOString() : null,
-            timeRange: { start: startTimeStr, stop: stopTime }
+            timeRange: { start: startTimeStr, stop: stopTimeStr }
           }));
         },
       });

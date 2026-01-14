@@ -145,7 +145,10 @@ export async function GET(request: NextRequest) {
     }
     
     const actualStartTimeStr = actualStartTime.toISOString();
-    const actualEndTime = latestTime || endTime; // Use latestTime if available, otherwise NOW (matching vibration API)
+    // For downtime calculation, always use the requested endTime (NOW or specified end date)
+    // Don't use latestTime as end time because that would make old data look like current downtime
+    // Instead, use the requested endTime so we calculate downtime for the actual requested period
+    const actualEndTime = endTime; // Always use the requested end time, not latestTime
     const actualEndTimeStr = actualEndTime.toISOString();
     const actualTotalTimeSeconds = (actualEndTime.getTime() - actualStartTime.getTime()) / 1000;
     

@@ -117,10 +117,13 @@ export default function MachinesNodesPage() {
 
   const getSensorTypeColor = (sensorType: string | null) => {
     if (!sensorType) return 'text-gray-500';
-    if (sensorType.includes('Vibration')) return 'text-yellow-400';
-    if (sensorType.includes('Current')) return 'text-blue-400';
-    if (sensorType.includes('Temperature')) return 'text-red-400';
-    return 'text-gray-400';
+    const lowerType = sensorType.toLowerCase();
+    if (lowerType.includes('vibration')) return 'text-yellow-400 bg-yellow-400/20';
+    if (lowerType.includes('current')) return 'text-blue-400 bg-blue-400/20';
+    if (lowerType.includes('temperature') || lowerType.includes('temp')) return 'text-red-400 bg-red-400/20';
+    if (lowerType.includes('pressure')) return 'text-purple-400 bg-purple-400/20';
+    if (lowerType.includes('humidity')) return 'text-green-400 bg-green-400/20';
+    return 'text-gray-400 bg-gray-400/20';
   };
 
   const getNodeTypeColor = (nodeType: string | null) => {
@@ -238,15 +241,15 @@ export default function MachinesNodesPage() {
                       {machine.nodes.length > 0 ? (
                         <div className="space-y-2">
                           {machine.nodes.map((node, idx) => (
-                            <div key={idx} className="flex items-center gap-3 text-xs">
+                            <div key={idx} className="inline-flex items-center gap-2 px-2 py-1 bg-dark-bg/50 border border-dark-border rounded text-xs">
                               <span className="font-mono text-gray-400">{node.mac}</span>
                               {node.nodeType && (
-                                <span className={`px-2 py-0.5 rounded ${getNodeTypeColor(node.nodeType)} bg-sage-500/10`}>
+                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${getNodeTypeColor(node.nodeType)} bg-sage-500/10`}>
                                   {node.nodeType}
                                 </span>
                               )}
                               {node.sensorType && (
-                                <span className={`px-2 py-0.5 rounded ${getSensorTypeColor(node.sensorType)}`}>
+                                <span className={`px-2 py-0.5 rounded text-xs font-semibold ${getSensorTypeColor(node.sensorType)}`}>
                                   {node.sensorType}
                                 </span>
                               )}

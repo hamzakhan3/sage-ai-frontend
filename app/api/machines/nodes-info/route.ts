@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     const db = await connectToDatabase();
     const machinesCollection = db.collection('machines');
     const connectionsCollection = db.collection('connections');
+    const nodesCollection = db.collection('nodes');
     const labsCollection = db.collection('labs');
 
     // Build query for machines
@@ -70,6 +71,76 @@ export async function GET(request: NextRequest) {
       ]
     }).toArray();
 
+    // Get all unique MAC addresses from connections
+    const macAddresses = [...new Set(connections.map(conn => conn.mac).filter(Boolean))];
+    
+    // Fetch node details from nodes collection (contains sensorType, threshold, scale, etc.)
+    const nodes = await nodesCollection.find({
+      mac: { $in: macAddresses }
+    }).toArray();
+    
+    // Create a map of MAC -> node data for quick lookup
+    const nodeMap = new Map();
+    
+    // Process nodes collection - extract sensor info from nested structures
+    nodes.forEach(node => {
+      const mac = node.mac;
+      let sensorType = null;
+      let threshold = null;
+      let scale = null;
+      
+      // Determine sensor type based on which sensor objects are present
+      if (node.ct && node.ct.status) {
+        sensorType = 'Current';
+        scale = node.ct.scaler || null;
+        threshold = node.ct.threshold_current ? {
+          min: node.ct.threshold_current.min,
+          max: node.ct.threshold_current.max
+        } : null;
+      } else if (node.vibration && node.vibration.status) {
+        sensorType = 'Vibration';
+        scale = node.vibration.scaler || null;
+        threshold = node.vibration.threshold ? {
+          min: node.vibration.threshold.min,
+          max: node.vibration.threshold.max
+        } : null;
+      } else if (node.thermistor && node.thermistor.status) {
+        sensorType = 'Temperature';
+        scale = node.thermistor.scaler || null;
+        threshold = node.thermistor.temp_threshold ? {
+          min: node.thermistor.temp_threshold.min,
+          max: node.thermistor.temp_threshold.max
+        } : null;
+      } else if (node.ambient && node.ambient.status) {
+        sensorType = 'Ambient Temperature & Humidity';
+        threshold = node.ambient.temp_threshold ? {
+          min: node.ambient.temp_threshold.min,
+          max: node.ambient.temp_threshold.max
+        } : null;
+      } else if (node.proximity && node.proximity.status) {
+        sensorType = 'Proximity';
+        scale = node.proximity.scaler || null;
+        threshold = node.proximity.threshold ? {
+          min: node.proximity.threshold.min,
+          max: node.proximity.threshold.max
+        } : null;
+      }
+      
+      nodeMap.set(mac, {
+        sensorType: sensorType,
+        threshold: threshold,
+        scale: scale,
+        // Include full node config for reference
+        nodeConfig: {
+          ct: node.ct,
+          vibration: node.vibration,
+          thermistor: node.thermistor,
+          ambient: node.ambient,
+          proximity: node.proximity,
+        }
+      });
+    });
+
     // Get lab information
     const labIds = [...new Set(machines.map(m => m.labId?.toString()).filter(Boolean))];
     const labObjectIds = labIds.map(id => {
@@ -106,22 +177,33 @@ export async function GET(request: NextRequest) {
       const macMap = connectionsByMachine.get(machineId)!;
       const mac = conn.mac;
       
+      // Get node data from nodes collection (has sensorType, threshold, scale, etc.)
+      const nodeData = nodeMap.get(mac) || {};
+      
       if (!macMap.has(mac)) {
         macMap.set(mac, {
           mac: mac,
           nodeType: conn.nodeType || null,
-          sensorType: conn.sensorType || null,
+          // Prefer sensorType from nodes collection, fallback to connections
+          sensorType: nodeData.sensorType || conn.sensorType || null,
+          threshold: nodeData.threshold || null,
+          scale: nodeData.scale || null,
+          // Include any other node configuration
+          ...(Object.keys(nodeData).length > 0 ? { config: nodeData } : {}),
         });
       } else {
         // Prefer the one with more complete info
         const existing = macMap.get(mac)!;
-        if ((!existing.nodeType && conn.nodeType) || (!existing.sensorType && conn.sensorType)) {
-          macMap.set(mac, {
-            mac: mac,
-            nodeType: conn.nodeType || existing.nodeType || null,
-            sensorType: conn.sensorType || existing.sensorType || null,
-          });
-        }
+        macMap.set(mac, {
+          mac: mac,
+          nodeType: conn.nodeType || existing.nodeType || null,
+          // Prefer sensorType from nodes collection
+          sensorType: nodeData.sensorType || existing.sensorType || conn.sensorType || null,
+          threshold: nodeData.threshold || existing.threshold || null,
+          scale: nodeData.scale || existing.scale || null,
+          // Merge configs
+          ...(Object.keys(nodeData).length > 0 ? { config: { ...(existing.config || {}), ...nodeData } } : existing.config ? { config: existing.config } : {}),
+        });
       }
     });
 

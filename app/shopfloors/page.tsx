@@ -38,7 +38,7 @@ export default function ShopfloorsPage() {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('cards');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // Check if user is logged in and get user data
   useEffect(() => {
@@ -215,17 +215,17 @@ export default function ShopfloorsPage() {
             {machines.map((machine) => (
               <div
                 key={machine._id}
-                className="bg-dark-panel border border-dark-border rounded-lg p-6 hover:border-sage-500/50 transition-all"
+                className="bg-dark-panel border border-dark-border rounded-lg p-3 hover:border-sage-500/50 transition-all"
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-2">
                   <div>
-                    <h3 className="text-lg font-medium text-white mb-1">{machine.machineName}</h3>
+                    <h3 className="text-sm font-medium text-white mb-1 line-clamp-2">{machine.machineName}</h3>
                     {machine.description && (
-                      <p className="text-sm text-gray-400">{machine.description}</p>
+                      <p className="text-xs text-gray-400 line-clamp-1">{machine.description}</p>
                     )}
                   </div>
                   <span
-                    className={`inline-flex px-3 py-1.5 text-xs font-medium rounded ${
+                    className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded flex-shrink-0 ${
                       machine.status === 'active'
                         ? 'bg-sage-500/20 text-sage-400 border border-sage-500/30'
                         : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
@@ -235,37 +235,46 @@ export default function ShopfloorsPage() {
                   </span>
                 </div>
                 
-                <div className="mt-4">
-                  <div className="text-xs font-medium text-gray-300 mb-2">
+                <div className="mt-auto">
+                  <div className="text-xs font-medium text-gray-300 mb-1.5">
                     Nodes {machine.nodes && machine.nodes.length > 0 && `(${machine.nodes.length})`}
                   </div>
                   {machine.nodes && machine.nodes.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {machine.nodes.map((node, idx) => (
-                        <div
-                          key={idx}
-                          className="inline-flex flex-col px-3 py-2 bg-dark-bg border border-dark-border rounded-md hover:border-sage-500/50 hover:bg-dark-border/30 transition-all cursor-default"
-                          title={`Node: ${node.mac}${node.nodeType ? ` | Type: ${node.nodeType}` : ''}${node.sensorType ? ` | Sensor: ${node.sensorType}` : ''}`}
-                        >
-                          <span className="text-xs font-mono text-white leading-tight">{node.mac}</span>
-                          {(node.nodeType || node.sensorType) && (
-                            <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-dark-border/50">
-                              {node.nodeType && (
-                                <span className="text-xs text-sage-400 font-medium">{node.nodeType}</span>
-                              )}
-                              {node.nodeType && node.sensorType && (
-                                <span className="text-gray-600 text-xs">•</span>
-                              )}
-                              {node.sensorType && (
-                                <span className="text-xs text-gray-400">{node.sensorType}</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                    <div className="flex flex-wrap gap-1">
+                      {machine.nodes.map((node, idx) => {
+                        const getSensorTypeColor = (sensorType: string | null) => {
+                          if (!sensorType) return 'text-gray-500 bg-gray-500/20';
+                          const lowerType = sensorType.toLowerCase();
+                          if (lowerType.includes('vibration')) return 'text-yellow-400 bg-yellow-400/20';
+                          if (lowerType.includes('current')) return 'text-blue-400 bg-blue-400/20';
+                          if (lowerType.includes('temperature') || lowerType.includes('temp')) return 'text-red-400 bg-red-400/20';
+                          if (lowerType.includes('pressure')) return 'text-purple-400 bg-purple-400/20';
+                          if (lowerType.includes('humidity')) return 'text-green-400 bg-green-400/20';
+                          return 'text-gray-400 bg-gray-400/20';
+                        };
+                        
+                        return (
+                          <div
+                            key={idx}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-dark-bg border border-dark-border rounded text-xs hover:border-sage-500/50 transition-all cursor-default"
+                          >
+                            <span className="font-mono text-white text-xs">{node.mac}</span>
+                            {node.nodeType && (
+                              <span className="text-xs text-sage-400 font-medium bg-sage-500/10 px-1 py-0.5 rounded">
+                                {node.nodeType}
+                              </span>
+                            )}
+                            {node.sensorType && (
+                              <span className={`text-xs font-semibold px-1 py-0.5 rounded ${getSensorTypeColor(node.sensorType)}`}>
+                                {node.sensorType.split(' ')[0]}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
-                    <span className="text-gray-500 text-sm">No nodes connected</span>
+                    <span className="text-gray-500 text-xs">No nodes connected</span>
                   )}
                 </div>
               </div>
@@ -273,16 +282,16 @@ export default function ShopfloorsPage() {
           </div>
         ) : (
           // Cards View
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {machines.map((machine) => (
               <div
                 key={machine._id}
-                className="bg-dark-panel border border-dark-border rounded-lg p-6 hover:border-sage-500/50 transition-all"
+                className="bg-dark-panel border border-dark-border rounded-lg p-3 hover:border-sage-500/50 transition-all aspect-[4/3] flex flex-col"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-lg font-medium text-white">{machine.machineName}</h3>
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className="text-sm font-medium text-white line-clamp-2">{machine.machineName}</h3>
                   <span
-                    className={`inline-flex px-3 py-1.5 text-xs font-medium rounded ${
+                    className={`inline-flex px-1.5 py-0.5 text-xs font-medium rounded flex-shrink-0 ${
                       machine.status === 'active'
                         ? 'bg-sage-500/20 text-sage-400 border border-sage-500/30'
                         : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
@@ -293,40 +302,47 @@ export default function ShopfloorsPage() {
                 </div>
                 
                 {machine.description && (
-                  <p className="text-sm text-gray-400 mb-4">{machine.description}</p>
+                  <p className="text-xs text-gray-400 mb-2 line-clamp-1">{machine.description}</p>
                 )}
                 
-                <div className="mt-4">
-                  <div className="text-xs font-medium text-gray-300 mb-2">
+                <div className="mt-auto">
+                  <div className="text-xs font-medium text-gray-300 mb-1.5">
                     Nodes {machine.nodes && machine.nodes.length > 0 && `(${machine.nodes.length})`}
                   </div>
                   {machine.nodes && machine.nodes.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {machine.nodes.map((node, idx) => (
-                        <div
-                          key={idx}
-                          className="inline-flex flex-col px-3 py-2 bg-dark-bg border border-dark-border rounded-md hover:border-sage-500/50 hover:bg-dark-border/30 transition-all cursor-default"
-                          title={`Node: ${node.mac}${node.nodeType ? ` | Type: ${node.nodeType}` : ''}${node.sensorType ? ` | Sensor: ${node.sensorType}` : ''}`}
-                        >
-                          <span className="text-xs font-mono text-white leading-tight">{node.mac}</span>
-                          {(node.nodeType || node.sensorType) && (
-                            <div className="flex items-center gap-1.5 mt-1.5 pt-1.5 border-t border-dark-border/50">
-                              {node.nodeType && (
-                                <span className="text-xs text-sage-400 font-medium">{node.nodeType}</span>
-                              )}
-                              {node.nodeType && node.sensorType && (
-                                <span className="text-gray-600 text-xs">•</span>
-                              )}
-                              {node.sensorType && (
-                                <span className="text-xs text-gray-400">{node.sensorType}</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                    <div className="flex flex-wrap gap-1 overflow-y-auto max-h-24">
+                      {machine.nodes.slice(0, 3).map((node, idx) => {
+                        const getSensorTypeColor = (sensorType: string | null) => {
+                          if (!sensorType) return 'text-gray-500 bg-gray-500/20';
+                          const lowerType = sensorType.toLowerCase();
+                          if (lowerType.includes('vibration')) return 'text-yellow-400 bg-yellow-400/20';
+                          if (lowerType.includes('current')) return 'text-blue-400 bg-blue-400/20';
+                          if (lowerType.includes('temperature') || lowerType.includes('temp')) return 'text-red-400 bg-red-400/20';
+                          if (lowerType.includes('pressure')) return 'text-purple-400 bg-purple-400/20';
+                          if (lowerType.includes('humidity')) return 'text-green-400 bg-green-400/20';
+                          return 'text-gray-400 bg-gray-400/20';
+                        };
+                        
+                        return (
+                          <div
+                            key={idx}
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-dark-bg border border-dark-border rounded text-xs hover:border-sage-500/50 transition-all cursor-default"
+                          >
+                            <span className="font-mono text-white text-xs">{node.mac}</span>
+                            {node.sensorType && (
+                              <span className={`font-semibold px-1 py-0.5 rounded text-xs ${getSensorTypeColor(node.sensorType)}`}>
+                                {node.sensorType.split(' ')[0]}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {machine.nodes.length > 3 && (
+                        <span className="text-xs text-gray-500">+{machine.nodes.length - 3}</span>
+                      )}
                     </div>
                   ) : (
-                    <span className="text-gray-500 text-sm">No nodes connected</span>
+                    <span className="text-gray-500 text-xs">No nodes</span>
                   )}
                 </div>
               </div>
