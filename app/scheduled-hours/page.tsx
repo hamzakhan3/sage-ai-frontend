@@ -961,8 +961,14 @@ export default function ScheduledHoursPage() {
 
   // Layer 2: Data Freshness Validation
   const validateDataFreshness = useCallback(() => {
+    // If any data is missing, consider it invalid
+    if (!scheduledHoursData || !utilizationData || !queryInfo) {
+      console.warn('[Data Validation] Missing required data');
+      return false;
+    }
+    
     // Check scheduled hours matches current shift
-    const scheduledShift = scheduledHoursData?.data?.shiftInfo?.shiftName;
+    const scheduledShift = scheduledHoursData?.shiftInfo?.shiftName;
     if (scheduledShift && scheduledShift !== selectedShift) {
       console.warn('[Data Validation] Scheduled hours shift mismatch:', scheduledShift, 'vs', selectedShift);
       return false;
@@ -1025,9 +1031,9 @@ export default function ScheduledHoursPage() {
     const labId = selectedLabId || null;
     
     // Get shift info from scheduled-hours API response (API Call #4)
-    const shiftName = scheduledHoursData?.data?.shiftInfo?.shiftName || selectedShift || null;
-    const shiftStartTime = scheduledHoursData?.data?.shiftInfo?.startTime || null;
-    const shiftEndTime = scheduledHoursData?.data?.shiftInfo?.endTime || null;
+    const shiftName = scheduledHoursData?.shiftInfo?.shiftName || selectedShift || null;
+    const shiftStartTime = scheduledHoursData?.shiftInfo?.startTime || null;
+    const shiftEndTime = scheduledHoursData?.shiftInfo?.endTime || null;
     
     // CRITICAL: Get selected machine name from CURRENT dropdown selection, not from API response
     // This ensures we always use the latest selection, not stale API data
@@ -1094,7 +1100,6 @@ export default function ScheduledHoursPage() {
           allMachines: machines.map(m => ({
             id: m._id,
             name: m.machineName,
-            description: m.description,
             status: m.status,
           })),
         },
@@ -1102,7 +1107,7 @@ export default function ScheduledHoursPage() {
         scheduledHours: {
           loading: loadingScheduledHours,
           data: scheduledHoursData,
-          shiftInfo: scheduledHoursData?.data?.shiftInfo || null, // Shift name, times from API
+          shiftInfo: scheduledHoursData?.shiftInfo || null, // Shift name, times from API
         },
         // API Call #5: Query Info - Note: We use dropdown selection, not API response for machine name
         queryInfo: {
@@ -1160,11 +1165,17 @@ export default function ScheduledHoursPage() {
       return; // Not ready yet
     }
 
-    // Validate data freshness
-    if (!validateDataFreshness()) {
-      console.warn('[AI Analysis] Data freshness validation failed');
-      toast.error('Data may be stale. Please refresh the page and try again');
-      return;
+    // Validate data freshness - but only if data is not currently loading
+    // If data is loading, it means we're waiting for fresh data, so don't fail validation yet
+    if (!loadingScheduledHours && !loadingQueryInfo && !loadingUtilization) {
+      if (!validateDataFreshness()) {
+        console.warn('[AI Analysis] Data freshness validation failed');
+        toast.error('Data may be stale. Please wait for data to finish loading, then try again');
+        return;
+      }
+    } else {
+      // Data is still loading, wait a bit and check again
+      console.log('[AI Analysis] Data is still loading, validation will be checked after data loads');
     }
 
     isAnalysisInProgress.current = true;
@@ -1257,6 +1268,9 @@ export default function ScheduledHoursPage() {
       console.log('[AI Analysis] Selections changed, clearing previous analysis');
       setAnalysis(null);
       lastAnalysisFingerprint.current = currentFingerprint;
+      // Reset the in-progress flag when selections change
+      isAnalysisInProgress.current = false;
+      setLoadingAnalysis(false);
     }
   }, [selectedLabId, selectedShift, selectedMachineId, dateRange, generateDataFingerprint]);
 
@@ -1439,14 +1453,24 @@ export default function ScheduledHoursPage() {
               </h2>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => {
-                    fetchAIAnalysis();
+                  onClick={async () => {
                     // Auto-expand when generating
                     if (!showAnalysis) {
                       setShowAnalysis(true);
                     }
+                    await fetchAIAnalysis();
                   }}
-                  disabled={loadingAnalysis || loadingScheduledHours || loadingQueryInfo || loadingUtilization}
+                  disabled={
+                    loadingAnalysis || 
+                    loadingScheduledHours || 
+                    loadingQueryInfo || 
+                    loadingUtilization ||
+                    !selectedLabId ||
+                    !selectedShift ||
+                    !scheduledHoursData?.success ||
+                    !queryInfo?.success ||
+                    !utilizationData?.success
+                  }
                   className="px-4 py-2 bg-sage-500 hover:bg-sage-600 text-white rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loadingAnalysis ? 'Generating...' : 'Generate Analysis'}

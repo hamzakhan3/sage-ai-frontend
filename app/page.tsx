@@ -6,7 +6,7 @@ import { AlarmHistory } from '@/components/AlarmHistory';
 import { WorkOrderForm } from '@/components/WorkOrderForm';
 import { RefreshIcon, SignalIcon, CalendarIcon, ChevronDownIcon, ChevronRightIcon, CheckIcon } from '@/components/Icons';
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { VibrationChart } from '@/components/VibrationChart';
 import { CurrentChart } from '@/components/CurrentChart';
@@ -74,6 +74,7 @@ interface WorkOrder {
 
 export default function Dashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [selectedLabId, setSelectedLabId] = useState<string>('');
   const [selectedMachineId, setSelectedMachineId] = useState<string>('');
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
@@ -157,14 +158,47 @@ export default function Dashboard() {
 
       if (data.success) {
         setLabs(data.labs || []);
-        // Auto-select Maheen Textiles lab if available, otherwise first lab
+        // Check for URL parameters first
+        const labIdFromUrl = searchParams.get('labId');
+        const machineIdFromUrl = searchParams.get('machineId');
+        
         if (data.labs && data.labs.length > 0) {
-          const maheenLab = data.labs.find((lab: Lab) => 
-            lab.name.toLowerCase().includes('maheen') || lab.name.toLowerCase().includes('textiles')
-          );
-          const labToSelect = maheenLab || data.labs[0];
-          setSelectedLabId(labToSelect._id);
-          fetchMachinesForLab(labToSelect._id);
+          // If URL parameters exist and are valid, use them
+          if (labIdFromUrl && data.labs.find((lab: Lab) => lab._id === labIdFromUrl)) {
+            setSelectedLabId(labIdFromUrl);
+            // Fetch machines without auto-selecting (skipAutoSelect = true)
+            fetchMachinesForLab(labIdFromUrl, true).then((machinesList) => {
+              // After machines are loaded, set the machine if provided in URL
+              if (machineIdFromUrl && machinesList.length > 0) {
+                const machine = machinesList.find((m: Machine) => m._id === machineIdFromUrl);
+                if (machine) {
+                  setSelectedMachineId(machineIdFromUrl);
+                  setSelectedMachine(machine);
+                } else {
+                  // Machine not found, select first one
+                  if (machinesList.length > 0) {
+                    setSelectedMachineId(machinesList[0]._id);
+                    setSelectedMachine(machinesList[0]);
+                  }
+                }
+              } else if (machinesList.length > 0) {
+                // No machine in URL, select first one
+                setSelectedMachineId(machinesList[0]._id);
+                setSelectedMachine(machinesList[0]);
+              }
+              // Clear URL parameters
+              router.replace('/', { scroll: false });
+            });
+          } else {
+            // No valid URL parameters, use default logic
+            // Auto-select Maheen Textiles lab if available, otherwise first lab
+            const maheenLab = data.labs.find((lab: Lab) => 
+              lab.name.toLowerCase().includes('maheen') || lab.name.toLowerCase().includes('textiles')
+            );
+            const labToSelect = maheenLab || data.labs[0];
+            setSelectedLabId(labToSelect._id);
+            fetchMachinesForLab(labToSelect._id, false);
+          }
         } else {
           console.warn('[Dashboard] No labs found for user');
           toast.warning('No labs found for your account');
@@ -182,37 +216,46 @@ export default function Dashboard() {
   };
 
   // Fetch machines for selected lab
-  const fetchMachinesForLab = async (labId: string) => {
+  const fetchMachinesForLab = async (labId: string, skipAutoSelect: boolean = false): Promise<Machine[]> => {
     try {
       setLoading(true);
       const response = await fetch(`/api/machines?labId=${labId}`);
       const data = await response.json();
 
       if (data.success) {
-        setMachines(data.machines || []);
-        // Auto-select Polyol Pump Motor if available, otherwise first machine
-        if (data.machines && data.machines.length > 0) {
-          const polyolMotor = data.machines.find((machine: Machine) => 
-            machine.machineName?.toLowerCase().includes('polyol') && 
-            machine.machineName?.toLowerCase().includes('pump')
-          );
-          const machineToSelect = polyolMotor || data.machines[0];
-          setSelectedMachineId(machineToSelect._id);
-          setSelectedMachine(machineToSelect);
-        } else {
-          setSelectedMachineId('');
-          setSelectedMachine(null);
+        const machinesList = data.machines || [];
+        setMachines(machinesList);
+        
+        // Only auto-select if not skipping (i.e., not coming from URL params)
+        if (!skipAutoSelect) {
+          // Auto-select Polyol Pump Motor if available, otherwise first machine
+          if (machinesList.length > 0) {
+            const polyolMotor = machinesList.find((machine: Machine) => 
+              machine.machineName?.toLowerCase().includes('polyol') && 
+              machine.machineName?.toLowerCase().includes('pump')
+            );
+            const machineToSelect = polyolMotor || machinesList[0];
+            setSelectedMachineId(machineToSelect._id);
+            setSelectedMachine(machineToSelect);
+          } else {
+            setSelectedMachineId('');
+            setSelectedMachine(null);
+          }
         }
+        
+        return machinesList;
       } else {
         toast.error('Failed to fetch machines');
         setMachines([]);
         setSelectedMachineId('');
+        return [];
       }
     } catch (error) {
       console.error('Error fetching machines:', error);
       toast.error('Error loading machines');
       setMachines([]);
       setSelectedMachineId('');
+      return [];
     } finally {
       setLoading(false);
     }

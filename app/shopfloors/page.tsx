@@ -268,6 +268,13 @@ export default function ShopfloorsPage() {
     }
   };
 
+  // Handle machine card click - navigate to Monitoring page
+  const handleMachineClick = (machineId: string) => {
+    if (selectedLabId) {
+      router.push(`/?labId=${selectedLabId}&machineId=${machineId}`);
+    }
+  };
+
   if (loading && !user) {
     return (
       <div className="bg-dark-bg text-dark-text p-6 min-h-screen flex items-center justify-center">
@@ -351,7 +358,8 @@ export default function ShopfloorsPage() {
             {machines.map((machine) => (
               <div
                 key={machine._id}
-                className="bg-dark-panel border border-dark-border rounded-lg p-3 hover:border-sage-500/50 transition-all"
+                onClick={() => handleMachineClick(machine._id)}
+                className="bg-dark-panel border border-dark-border rounded-lg p-3 hover:border-sage-500/50 transition-all cursor-pointer hover:bg-dark-bg/30"
               >
                 <div className="mb-2">
                   <div className="flex-1">
@@ -416,7 +424,8 @@ export default function ShopfloorsPage() {
             {machines.map((machine) => (
               <div
                 key={machine._id}
-                className="bg-dark-panel border border-dark-border rounded-lg p-3 hover:border-sage-500/50 transition-all aspect-[4/3] flex flex-col relative"
+                onClick={() => handleMachineClick(machine._id)}
+                className="bg-dark-panel border border-dark-border rounded-lg p-3 hover:border-sage-500/50 transition-all aspect-[4/3] flex flex-col relative cursor-pointer hover:bg-dark-bg/30"
               >
                 <div className="flex-1 flex flex-col min-h-0 mb-16">
                   <div className="mb-2">
