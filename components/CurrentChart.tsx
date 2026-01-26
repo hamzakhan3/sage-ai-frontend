@@ -1,53 +1,43 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useVibrationData } from '@/hooks/useVibrationData';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
-interface VibrationChartProps {
+interface CurrentChartProps {
   machineId?: string;
   timeRange?: string;
   onTimeRangeChange?: (range: '24h' | '7d' | '30d') => void;
 }
 
-type TimeRangeOption = '24h' | '7d' | '30d';
-type VibrationAxis = 'vibration' | 'x_vibration' | 'y_vibration' | 'x_acc' | 'y_acc' | 'z_acc';
+type TimeRangeOption = '5m' | '30m' | '1h' | '24h';
+type CTField = 'CT1' | 'CT2' | 'CT3' | 'CT_Avg' | 'total_current';
 
-const AXIS_COLORS: Record<VibrationAxis, string> = {
-  vibration: '#437874', // Sage green (overall) - matches app theme
-  x_vibration: '#4b5563', // Slate gray-blue (X-axis vibration)
-  y_vibration: '#a78bfa', // Muted lavender/purple (Y-axis vibration)
-  x_acc: '#4b5563', // Slate gray-blue (X acceleration)
-  y_acc: '#437874', // Sage green (Y acceleration)
-  z_acc: '#a78bfa', // Muted lavender/purple (Z acceleration)
+const CT_FIELD_COLORS: Record<CTField, string> = {
+  CT1: '#437874', // Sage green
+  CT2: '#a78bfa', // Muted lavender/purple
+  CT3: '#4b5563', // Slate gray-blue
+  CT_Avg: '#f59e0b', // Amber
+  total_current: '#10b981', // Green
 };
 
-const AXIS_LABELS: Record<VibrationAxis, string> = {
-  vibration: 'Overall Vibration',
-  x_vibration: 'X-Axis Vibration',
-  y_vibration: 'Y-Axis Vibration',
-  x_acc: 'X-Axis Acceleration',
-  y_acc: 'Y-Axis Acceleration',
-  z_acc: 'Z-Axis Acceleration',
+const CT_FIELD_LABELS: Record<CTField, string> = {
+  CT1: 'CT1',
+  CT2: 'CT2',
+  CT3: 'CT3',
+  CT_Avg: 'CT Average',
+  total_current: 'Total Current',
 };
 
-export function VibrationChart({ 
-  machineId = 'lathe01',
+export function CurrentChart({ 
+  machineId = 'machine-01',
   timeRange = '-5m',
   onTimeRangeChange
-}: VibrationChartProps) {
-  // Time range options
-  type TimeRangeOption = '5m' | '30m' | '1h' | '24h';
+}: CurrentChartProps) {
   const [selectedTimeRange, setSelectedTimeRange] = useState<TimeRangeOption>('5m');
-  
-  // Convert to API format and determine aggregation
-  const apiTimeRange = `-${selectedTimeRange}`;
-  // Use raw data for short ranges, aggregated for longer ranges
-  const windowPeriod = selectedTimeRange === '24h' ? '1m' : 'raw'; // 1 minute aggregation for 24h, raw for others
-  
-  const [selectedAxes, setSelectedAxes] = useState<VibrationAxis[]>(['z_acc', 'x_acc', 'y_acc']);
-  
-  // State for last seen timestamp
+  const [selectedFields, setSelectedFields] = useState<CTField[]>(['CT1', 'CT2', 'CT3']);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [fieldData, setFieldData] = useState<Map<CTField, Array<{ time: string; value: number }>>>(new Map());
   const [lastSeenTime, setLastSeenTime] = useState<string | null>(null);
   
   // Zoom state - indices of data to show
@@ -57,6 +47,11 @@ export function VibrationChart({
   const [selectionStartX, setSelectionStartX] = useState<number | null>(null);
   const [selectionEndX, setSelectionEndX] = useState<number | null>(null);
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Convert to API format and determine aggregation
+  const apiTimeRange = `-${selectedTimeRange}`;
+  // Use raw data for 5m, 30m, 1h; aggregated for 24h
+  const windowPeriod = selectedTimeRange === '24h' ? '1m' : 'raw';
   
   // Handle time range change
   const handleTimeRangeChange = (range: TimeRangeOption) => {
@@ -94,14 +89,141 @@ export function VibrationChart({
       default: return '5 minutes';
     }
   };
-  
+
+  // Format last seen time - match VibrationChart format
+  const formatLastSeenTime = (isoString: string | null) => {
+    if (!isoString) return 'N/A';
+    const date = new Date(isoString);
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+  };
+
+  // Fetch current data for all selected fields
+  useEffect(() => {
+    if (!machineId || selectedFields.length === 0) return;
+
+    setIsLoading(true);
+    setError(null);
+    setFieldData(new Map());
+
+    // Fetch data for each field
+    const fetchPromises = selectedFields.map(async (field) => {
+      try {
+        const response = await fetch(
+          `/api/influxdb/current?machineId=${encodeURIComponent(machineId)}&timeRange=${apiTimeRange}&windowPeriod=${windowPeriod}&field=${field}`
+        );
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${field} data: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.error) {
+          throw new Error(result.error);
+        }
+        
+        return { field, data: result.data || [], latestTime: result.latestDataTime };
+      } catch (err) {
+        console.error(`Error fetching ${field} data:`, err);
+        return { field, data: [], latestTime: null };
+      }
+    });
+
+    Promise.all(fetchPromises)
+      .then((results) => {
+        const newFieldData = new Map<CTField, Array<{ time: string; value: number }>>();
+        let latestTime: string | null = null;
+
+        results.forEach(({ field, data, latestTime: fieldLatestTime }) => {
+          if (data.length > 0) {
+            newFieldData.set(field, data);
+          }
+          // Track the most recent latestTime across all fields
+          if (fieldLatestTime && (!latestTime || new Date(fieldLatestTime) > new Date(latestTime))) {
+            latestTime = fieldLatestTime;
+          }
+        });
+
+        setFieldData(newFieldData);
+        // Store as ISO string for consistent formatting (match VibrationChart)
+        setLastSeenTime(latestTime ? new Date(latestTime).toISOString() : null);
+      })
+      .catch((err) => {
+        console.error('Error fetching current data:', err);
+        setError(err instanceof Error ? err : new Error(String(err)));
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [machineId, apiTimeRange, windowPeriod, selectedFields]);
+
+  // Format chart data - combine all fields into single dataset (full dataset)
+  const allChartData = useMemo(() => {
+    if (fieldData.size === 0) return [];
+
+    // Get all unique timestamps from all fields
+    const allTimestamps = new Set<number>();
+    fieldData.forEach((data) => {
+      if (data && Array.isArray(data)) {
+        data.forEach(point => {
+          allTimestamps.add(new Date(point.time).getTime());
+        });
+      }
+    });
+
+    // Create a map for each field's data by timestamp
+    const dataByField = new Map<CTField, Map<number, number>>();
+    fieldData.forEach((data, field) => {
+      const map = new Map<number, number>();
+      if (data && Array.isArray(data)) {
+        data.forEach(point => {
+          map.set(new Date(point.time).getTime(), point.value);
+        });
+      }
+      dataByField.set(field, map);
+    });
+
+    // Combine into single dataset
+    return Array.from(allTimestamps)
+      .sort((a, b) => a - b)
+      .map(timestamp => {
+        const date = new Date(timestamp);
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        const timeLabel = `${hours}:${minutes}:${seconds}`;
+        
+        const dataPoint: any = {
+          time: timeLabel,
+          timestamp,
+          fullTime: date.toISOString(),
+        };
+
+        // Add value for each selected field
+        selectedFields.forEach(field => {
+          const fieldMap = dataByField.get(field);
+          dataPoint[field] = fieldMap?.get(timestamp) ?? null;
+        });
+
+        return dataPoint;
+      });
+  }, [fieldData, selectedFields]);
+
   // Convert X coordinate to data index
-  const getIndexFromX = (x: number, containerWidth: number): number => {
-    if (allChartData.length === 0 || containerWidth === 0) return 0;
+  const getIndexFromX = (x: number, containerWidth: number, dataLength: number): number => {
+    if (dataLength === 0 || containerWidth === 0) return 0;
     // Approximate: assume chart takes up most of the container width
     const chartWidth = containerWidth * 0.9; // Account for margins
     const relativeX = Math.max(0, Math.min(1, (x - containerWidth * 0.05) / chartWidth));
-    return Math.floor(relativeX * allChartData.length);
+    return Math.floor(relativeX * dataLength);
   };
   
   // Handle mouse down on chart
@@ -124,15 +246,15 @@ export function VibrationChart({
   
   // Handle mouse up - finalize selection
   const handleMouseUp = () => {
-    if (!isSelecting || !chartContainerRef.current || selectionStartX === null || selectionEndX === null) {
+    if (!isSelecting || !chartContainerRef.current || selectionStartX === null || selectionEndX === null || allChartData.length === 0) {
       setIsSelecting(false);
       return;
     }
     
     const rect = chartContainerRef.current.getBoundingClientRect();
     const width = rect.width;
-    const startIndex = getIndexFromX(selectionStartX, width);
-    const endIndex = getIndexFromX(selectionEndX, width);
+    const startIndex = getIndexFromX(selectionStartX, width, allChartData.length);
+    const endIndex = getIndexFromX(selectionEndX, width, allChartData.length);
     
     if (startIndex !== endIndex) {
       const minIndex = Math.min(startIndex, endIndex);
@@ -145,111 +267,8 @@ export function VibrationChart({
     setSelectionStartX(null);
     setSelectionEndX(null);
   };
-  
-  // Fetch data for all selected axes
-  const axisData = selectedAxes.map(axis => ({
-    axis,
-    ...useVibrationData(machineId, apiTimeRange, windowPeriod, axis)
-  }));
-  
-  const isLoading = axisData.some(d => d.isLoading);
-  const error = axisData.find(d => d.error)?.error;
 
-  // Get the latest timestamp from all axes
-  useEffect(() => {
-    if (!isLoading && !error && axisData.length > 0) {
-      let latestTime: Date | null = null;
-      axisData.forEach(({ data }) => {
-        if (data && Array.isArray(data) && data.length > 0) {
-          data.forEach((point: { time: string; value: number }) => {
-            try {
-              const pointTime = new Date(point.time);
-              if (!isNaN(pointTime.getTime())) {
-                const currentLatest = latestTime;
-                if (currentLatest === null || pointTime.getTime() > currentLatest.getTime()) {
-                  latestTime = pointTime;
-                }
-              }
-            } catch (e) {
-              // Skip invalid dates
-            }
-          });
-        }
-      });
-      
-      setLastSeenTime(latestTime ? (latestTime as Date).toISOString() : null);
-    }
-  }, [axisData, isLoading, error]);
-
-  // Format last seen time for display
-  const formatLastSeenTime = (isoString: string | null) => {
-    if (!isoString) return 'N/A';
-    const date = new Date(isoString);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
-  };
-
-  // Combine data from all axes into a single chart dataset (full dataset)
-  const allChartData = useMemo(() => {
-    if (isLoading || error || !axisData.length) return [];
-
-    // Get all unique timestamps from all axes
-    const allTimestamps = new Set<number>();
-    axisData.forEach(({ data }) => {
-      if (data && Array.isArray(data)) {
-        data.forEach(point => {
-          allTimestamps.add(new Date(point.time).getTime());
-        });
-      }
-    });
-
-    // Create a map for each axis's data by timestamp
-    const dataByAxis = new Map<VibrationAxis, Map<number, number>>();
-    axisData.forEach(({ axis, data }) => {
-      const map = new Map<number, number>();
-      if (data && Array.isArray(data)) {
-        data.forEach(point => {
-          map.set(new Date(point.time).getTime(), point.value);
-        });
-      }
-      dataByAxis.set(axis, map);
-    });
-
-    // Combine into single dataset
-    return Array.from(allTimestamps)
-      .sort((a, b) => a - b)
-      .map(timestamp => {
-        const date = new Date(timestamp);
-        // For 5-minute view, show time with seconds
-          const hours = date.getHours().toString().padStart(2, '0');
-          const minutes = date.getMinutes().toString().padStart(2, '0');
-        const seconds = date.getSeconds().toString().padStart(2, '0');
-        const timeLabel = `${hours}:${minutes}:${seconds}`;
-        
-        const dataPoint: any = {
-          time: timeLabel,
-          timestamp,
-          fullTime: date.toISOString(),
-        };
-
-        // Add value for each selected axis
-        selectedAxes.forEach(axis => {
-          const axisMap = dataByAxis.get(axis);
-          dataPoint[axis] = axisMap?.get(timestamp) ?? null;
-        });
-
-        return dataPoint;
-      });
-  }, [axisData, selectedAxes, isLoading, error]);
-
-  // Apply zoom to chart data - use allChartData for Brush, filtered data for display
+  // Apply zoom to chart data - use allChartData for selection, filtered data for display
   const chartData = useMemo(() => {
     if (allChartData.length === 0) return [];
     
@@ -266,15 +285,13 @@ export function VibrationChart({
   const isZoomed = zoomStartIndex !== null && zoomEndIndex !== null && 
                    (zoomStartIndex !== 0 || zoomEndIndex !== allChartData.length - 1);
 
-  const availableAxes: { value: VibrationAxis; label: string }[] = [
-    { value: 'vibration', label: 'Overall Vibration' },
-    { value: 'x_vibration', label: 'X-Axis Vibration' },
-    { value: 'y_vibration', label: 'Y-Axis Vibration' },
-    { value: 'x_acc', label: 'X-Axis Acceleration' },
-    { value: 'y_acc', label: 'Y-Axis Acceleration' },
-    { value: 'z_acc', label: 'Z-Axis Acceleration' },
+  const availableFields: { value: CTField; label: string }[] = [
+    { value: 'CT1', label: 'CT1' },
+    { value: 'CT2', label: 'CT2' },
+    { value: 'CT3', label: 'CT3' },
+    { value: 'CT_Avg', label: 'CT Average' },
+    { value: 'total_current', label: 'Total Current' },
   ];
-
 
   const timeRangeOptions: { value: TimeRangeOption; label: string }[] = [
     { value: '5m', label: 'Last 5 Minutes' },
@@ -287,7 +304,7 @@ export function VibrationChart({
     <div className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div>
-        <h3 className="heading-inter heading-inter-sm">Vibration Time Series</h3>
+          <h3 className="heading-inter heading-inter-sm">Current (CT) Time Series</h3>
           <div className="text-xs text-gray-500 mt-1">
             {getDataTypeText()} (Last {getTimeRangeText()} of available data)
             {lastSeenTime && (
@@ -295,19 +312,19 @@ export function VibrationChart({
             )}
           </div>
         </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-400">Time Range:</label>
-            <select
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-400">Time Range:</label>
+          <select
             value={selectedTimeRange || '5m'}
-              onChange={(e) => handleTimeRangeChange(e.target.value as TimeRangeOption)}
-              className="bg-dark-panel border border-dark-border rounded px-3 py-1.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500"
-            >
-              {timeRangeOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            onChange={(e) => handleTimeRangeChange(e.target.value as TimeRangeOption)}
+            className="bg-dark-panel border border-dark-border rounded px-3 py-1.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-sage-500 focus:border-sage-500"
+          >
+            {timeRangeOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -315,15 +332,15 @@ export function VibrationChart({
         <div className="flex items-center justify-center py-8">
           <div className="flex items-center gap-2 text-sage-400 animate-pulse">
             <div className="w-4 h-4 border-2 border-sage-400 border-t-transparent rounded-full animate-spin"></div>
-            <span className="font-medium">Loading vibration data...</span>
+            <span className="font-medium">Loading current data...</span>
           </div>
         </div>
       ) : error ? (
         <div className="text-red-400 text-center py-8">
-          <div className="mb-2">Error loading vibration data</div>
+          <div className="mb-2">Error loading current data</div>
           <div className="text-sm text-gray-500">{error instanceof Error ? error.message : String(error)}</div>
         </div>
-      ) : chartData.length > 0 && selectedAxes.length > 0 ? (
+      ) : chartData.length > 0 && selectedFields.length > 0 ? (
         <div 
           ref={chartContainerRef} 
           className="relative"
@@ -364,16 +381,16 @@ export function VibrationChart({
               dataKey="time" 
               stroke="#e0e0e0"
               style={{ fontSize: '11px' }}
-                angle={-45}
-                textAnchor="end"
-                height={80}
-                interval="preserveStartEnd"
+              angle={-45}
+              textAnchor="end"
+              height={80}
+              interval="preserveStartEnd"
               tick={{ fill: '#9ca3af' }}
             />
             <YAxis 
               stroke="#e0e0e0"
               style={{ fontSize: '12px' }}
-              label={{ value: 'Vibration (mm/s) / Acceleration (g)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#e0e0e0' } }}
+              label={{ value: 'Current (A)', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#e0e0e0' } }}
             />
             <Tooltip 
               contentStyle={{ 
@@ -385,9 +402,8 @@ export function VibrationChart({
                 boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)'
               }}
               formatter={(value: number, name: string) => {
-                const axis = name as VibrationAxis;
-                const unit = axis.includes('acc') ? 'g' : 'mm/s';
-                return [`${value !== null ? value.toFixed(2) : 'N/A'} ${unit}`, AXIS_LABELS[axis] || name];
+                const field = name as CTField;
+                return [`${value !== null ? value.toFixed(2) : 'N/A'} A`, CT_FIELD_LABELS[field] || name];
               }}
               labelFormatter={(label, payload) => {
                 if (payload && payload[0] && payload[0].payload.fullTime) {
@@ -398,36 +414,39 @@ export function VibrationChart({
                     year: 'numeric',
                     hour: '2-digit', 
                     minute: '2-digit',
-                    second: '2-digit'
+                    second: '2-digit',
+                    hour12: true
                   });
                 }
-                return `Time: ${label}`;
+                return label;
               }}
             />
             <Legend 
               wrapperStyle={{ paddingTop: '20px' }}
-              iconType="line"
+              formatter={(value) => CT_FIELD_LABELS[value as CTField] || value}
             />
-            {selectedAxes.map(axis => (
+            {selectedFields.map(field => (
               <Line 
-                key={axis}
+                key={field}
                 type="monotone" 
-                dataKey={axis}
-                name={AXIS_LABELS[axis]}
-                stroke={AXIS_COLORS[axis]}
+                dataKey={field} 
+                stroke={CT_FIELD_COLORS[field]}
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: AXIS_COLORS[axis] }}
-                connectNulls={false}
+                activeDot={{ r: 4, fill: CT_FIELD_COLORS[field] }}
+                name={field}
               />
             ))}
           </LineChart>
         </ResponsiveContainer>
         </div>
-      ) : selectedAxes.length === 0 ? (
-        <div className="text-gray-400 text-center py-8">Please select at least one axis to display</div>
       ) : (
-        <div className="text-gray-400 text-center py-8">No vibration data points to display</div>
+        <div className="text-center py-8 text-gray-400">
+          <div className="mb-2">No current data available</div>
+          <div className="text-sm text-gray-500">
+            Time range: {getTimeRangeText()} | Machine: {machineId}
+          </div>
+        </div>
       )}
 
       {/* Zoomed Time Range Display */}
@@ -465,6 +484,36 @@ export function VibrationChart({
           Click and drag on the chart to select a time range and zoom in
         </div>
       )}
+
+      {/* Field Selection - Centered below graph */}
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        {availableFields.map(field => {
+          const isSelected = selectedFields.includes(field.value);
+          return (
+            <button
+              key={field.value}
+              onClick={() => {
+                if (isSelected) {
+                  setSelectedFields(prev => prev.filter(f => f !== field.value));
+                } else {
+                  setSelectedFields(prev => [...prev, field.value]);
+                }
+              }}
+              className={`px-4 py-2 text-sm font-medium transition-colors border ${
+                isSelected
+                  ? 'bg-dark-panel border-sage-500 text-sage-400'
+                  : 'bg-dark-panel border-dark-border text-gray-400 hover:text-gray-300 hover:border-dark-border'
+              }`}
+            >
+              <span
+                className="inline-block w-2 h-2 rounded-full mr-2 align-middle"
+                style={{ backgroundColor: CT_FIELD_COLORS[field.value] }}
+              />
+              {field.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
